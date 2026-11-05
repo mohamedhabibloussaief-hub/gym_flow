@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block page_title %}Member Management Hub{% endblock %}
+{% block page_subtitle %}Search directory, instant member onboarding, and digital pass generation{% endblock %}
+
+{% block head %}
+<style>
+    .hub-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        gap: 16px;
+    }
+    .search-input {
+        flex: 1;
+        max-width: 450px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        outline: none;
+    }
+
+    .members-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+    .members-table th {
+        text-align: left;
+        padding: 14px 16px;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border);
+        font-weight: 600;
+    }
+    .members-table td {
+        padding: 16px;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+        vertical-align: middle;
+    }
+    .members-table tr:hover { background: rgba(255,255,255,0.02); }
+
+    /* Modal Form */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.75);
+        backdrop-filter: blur(4px);
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+    }
+    .modal.active { display: flex; }
+    .modal-box {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        width: 520px;
+        padding: 32px;
+    }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 6px; }
+    .form-group input, .form-group select {
+        width: 100%;
+        background: #090D16;
+        border: 1px solid var(--border);
+        color: white;
+        padding: 10px 12px;
+        border-radius: 6px;
+        outline: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hub-actions">
+    <input type="text" id="memberSearch" class="search-input" placeholder="Search by name, email, or ID..." oninput="handleSearch()">
+    <button class="btn" onclick="openModal()">+ Register New Member</button>
+</div>
+
+<div class="card" style="padding: 0; overflow-x: auto;">
+    <table class="members-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>MEMBER NAME</th>
+                <th>CONTACT</th>
+                <th>PLAN</th>
+                <th>ASSIGNED COACH</th>
+                <th>STATUS</th>
+                <th>ACTIONS</th>
+            </tr>
+        </thead>
+        <tbody id="memberTableBody">
+            <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Loading members...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal Register Form -->
+<div class="modal" id="addMemberModal">
+    <div class="modal-box">
+        <h2 style="font-size: 1.25rem; margin-bottom: 20px;">Onboard New Member</h2>
+        <form id="onboardForm" onsubmit="submitMember(event)">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" id="fname" required>
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" id="lname" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="email" required>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" id="phone" required placeholder="+216 ...">
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="gender">
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                    <label>Membership Tier</label>
+                    <select id="plan_id">
+                        {% for p in plans %}
+                        <option value="{{ p.id }}">{{ p.name }} (${{ p.price }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Personal Coach</label>
+                    <select id="trainer_id">
+                        <option value="">None (General Access)</option>
+                        {% for t in trainers %}
+                        <option value="{{ t.id }}">{{ t.fname }} {{ t.lname }} ({{ t.specialty }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn">Complete Registration</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let searchDebounceTimer;
+
+    function openModal() { document.getElementById('addMemberModal').classList.add('active'); }
+    function closeModal() { document.getElementById('addMemberModal').classList.remove('active'); }
+
+    async function loadMembers(term = '') {
+        const res = await fetch(`/api/members?q=${encodeURIComponent(term)}`);
+        const data = await res.json();
+        const tbody = document.getElementById('memberTableBody');
+
+        if (data.members.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No members found matching your search.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = data.members.map(m => `
+            <tr>
+                <td><strong style="color: #60A5FA;">#${String(m.id).padStart(4, '0')}</strong></td>
+                <td>
+                    <div style="font-weight: 600;">${m.fname} ${m.lname}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Joined ${m.joined_date}</div>
+                </td>
+                <td>
+                    <div>${m.email}</div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">${m.phone}</div>
+                </td>
+                <td><span style="font-weight: 500;">${m.plan_name}</span></td>
+                <td><span style="color: var(--text-muted);">${m.trainer_name}</span></td>
+                <td>
+                    <span class="badge-pill ${m.status === 'Active' ? 'badge-active' : 'badge-suspended'}">${m.status}</span>
+                </td>
+                <td>
+                    <a href="/member/${m.id}/badge" target="_blank" class="btn btn-outline" style="padding: 6px 12px; font-size: 0.8rem;">
+                        🎟️ Export Pass
+                    </a>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function handleSearch() {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => {
+            loadMembers(document.getElementById('memberSearch').value);
+        }, 250);
+    }
+
+    async function submitMember(e) {
+        e.preventDefault();
+        const payload = {
+            fname: document.getElementById('fname').value,
+            lname: document.getElementById('lname').value,
+            email: document.getElementById('email').value,
+            phone: document.getElementById('phone').value,
+            gender: document.getElementById('gender').value,
+            plan_id: parseInt(document.getElementById('plan_id').value),
+            trainer_id: document.getElementById('trainer_id').value ? parseInt(document.getElementById('trainer_id').value) : null
+        };
+
+        const res = await fetch('/api/members', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+            showNotification(`Member #${data.member_id} successfully created!`);
+            closeModal();
+            document.getElementById('onboardForm').reset();
+            loadMembers();
+        } else {
+            showNotification(data.error || 'Registration failed', 'error');
+        }
+    }
+
+    loadMembers();
+</script>
+{% endblock %}

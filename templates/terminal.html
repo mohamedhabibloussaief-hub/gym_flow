@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block page_title %}Front Desk Access Terminal{% endblock %}
+{% block page_subtitle %}Instant pass scanner simulation and membership credential verification{% endblock %}
+
+{% block head %}
+<style>
+    .terminal-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+        align-items: start;
+    }
+
+    .scanner-box {
+        background: #0D1322;
+        border: 2px dashed #2563EB;
+        border-radius: 16px;
+        padding: 40px;
+        text-align: center;
+        box-shadow: 0 0 30px rgba(37, 99, 235, 0.1);
+    }
+
+    .scanner-icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 20px auto;
+        border: 2px solid #3B82F6;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+    }
+
+    .terminal-input {
+        width: 100%;
+        max-width: 320px;
+        margin: 20px auto;
+        background: #090D16;
+        border: 1px solid var(--border);
+        padding: 14px 18px;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        color: white;
+        text-align: center;
+        outline: none;
+        letter-spacing: 2px;
+    }
+
+    .verification-card {
+        display: none;
+        border-left: 4px solid var(--success);
+        padding: 24px;
+        animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .sample-badges {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 14px;
+    }
+    .badge-chip {
+        background: rgba(255,255,255,0.06);
+        border: 1px solid var(--border);
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .badge-chip:hover { background: rgba(59, 130, 246, 0.2); border-color: var(--primary); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="terminal-container">
+    <!-- Scanner Simulation Card -->
+    <div class="card scanner-box">
+        <div class="scanner-icon">⚡</div>
+        <h2 style="font-size: 1.25rem;">Optical / NFC Scanner Simulator</h2>
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 6px;">
+            Enter a Member ID or click a simulated badge pass to verify access.
+        </p>
+
+        <input type="number" id="terminalScanInput" class="terminal-input" placeholder="SCAN ID..." onkeydown="if(event.key==='Enter') executeScan()">
+        <br>
+        <button class="btn" onclick="executeScan()" style="padding: 12px 32px;">Trigger Check-In</button>
+
+        <div style="margin-top: 28px; border-top: 1px solid var(--border); padding-top: 16px;">
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 8px;">TEST WITH SEED CREDENTIALS</div>
+            <div class="sample-badges">
+                <span class="badge-chip" onclick="simulateScan(1)">Member #0001 (Ahmed)</span>
+                <span class="badge-chip" onclick="simulateScan(2)">Member #0002 (Samir)</span>
+                <span class="badge-chip" onclick="simulateScan(3)">Member #0003 (Linda)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verification Output View -->
+    <div>
+        <div class="card" id="waitingCard" style="text-align: center; padding: 60px 24px; color: var(--text-muted);">
+            <div style="font-size: 2.5rem; margin-bottom: 12px;">🛡️</div>
+            <h3>Awaiting Gate Scan</h3>
+            <p style="font-size: 0.85rem; margin-top: 4px;">Verified credentials and gate clearance will appear here.</p>
+        </div>
+
+        <div class="card verification-card" id="resultCard">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div>
+                    <span class="badge-pill badge-active" id="resStatusPill">ACCESS GRANTED</span>
+                    <h2 id="resName" style="font-size: 1.4rem; margin-top: 8px;">Ahmed Monji</h2>
+                    <p style="color: var(--text-muted); font-size: 0.85rem;" id="resMemberId">ID #0001</p>
+                </div>
+                <div style="font-size: 2.5rem;" id="resIcon">✅</div>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid var(--border); margin: 20px 0;">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">SUBSCRIPTION TIER</div>
+                    <div style="font-weight: 600; font-size: 0.95rem;" id="resPlan">Athlete Tier</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">ASSIGNED COACH</div>
+                    <div style="font-weight: 600; font-size: 0.95rem;" id="resTrainer">Khalil Hajlaoui</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">TERMINAL POINT</div>
+                    <div style="font-weight: 600; font-size: 0.95rem;">Gate Terminal Alpha</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">VERIFICATION TIME</div>
+                    <div style="font-weight: 600; font-size: 0.95rem;" id="resTimestamp">Just now</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function simulateScan(id) {
+        document.getElementById('terminalScanInput').value = id;
+        executeScan();
+    }
+
+    async function executeScan() {
+        const input = document.getElementById('terminalScanInput');
+        const id = input.value.trim();
+        if (!id) return;
+
+        const res = await fetch('/api/checkin', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ member_id: id })
+        });
+        const data = await res.json();
+
+        const waitingCard = document.getElementById('waitingCard');
+        const resultCard = document.getElementById('resultCard');
+
+        waitingCard.style.display = 'none';
+        resultCard.style.display = 'block';
+
+        if (data.success) {
+            resultCard.style.borderLeftColor = '#10B981';
+            document.getElementById('resStatusPill').className = 'badge-pill badge-active';
+            document.getElementById('resStatusPill').innerText = 'ACCESS GRANTED';
+            document.getElementById('resIcon').innerText = '✅';
+            document.getElementById('resName').innerText = data.name;
+            document.getElementById('resMemberId').innerText = `ID #${String(data.member_id).padStart(4, '0')}`;
+            document.getElementById('resPlan').innerText = data.plan;
+            document.getElementById('resTrainer').innerText = data.trainer;
+            document.getElementById('resTimestamp').innerText = new Date().toLocaleTimeString();
+            showNotification(`Access Approved: ${data.name}`);
+        } else {
+            resultCard.style.borderLeftColor = '#EF4444';
+            document.getElementById('resStatusPill').className = 'badge-pill badge-suspended';
+            document.getElementById('resStatusPill').innerText = 'ACCESS DENIED';
+            document.getElementById('resIcon').innerText = '⛔';
+            document.getElementById('resName').innerText = data.error || 'Denied';
+            document.getElementById('resMemberId').innerText = `ID #${id}`;
+            document.getElementById('resPlan').innerText = 'N/A';
+            document.getElementById('resTrainer').innerText = 'N/A';
+            document.getElementById('resTimestamp').innerText = new Date().toLocaleTimeString();
+            showNotification(data.error || 'Access Denied', 'error');
+        }
+        input.value = '';
+    }
+</script>
+{% endblock %}

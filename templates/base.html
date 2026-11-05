@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GymFlow Pro | Operational Command Center</title>
+    <!-- Modern Styling & Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <style>
+        :root {
+            --bg-body: #090D16;
+            --bg-card: #111827;
+            --border: #1F2937;
+            --primary: #3B82F6;
+            --primary-glow: rgba(59, 130, 246, 0.25);
+            --text-main: #F9FAFB;
+            --text-muted: #9CA3AF;
+            --success: #10B981;
+            --danger: #EF4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg-body); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+
+        /* Sidebar */
+        aside {
+            width: 260px;
+            background: #0D1322;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+        }
+
+        .brand {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 36px;
+            padding-left: 8px;
+        }
+        .brand-dot { width: 10px; height: 10px; background: var(--primary); border-radius: 50%; box-shadow: 0 0 12px var(--primary); }
+
+        .nav-links { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.92rem;
+            transition: all 0.2s ease;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #FFFFFF;
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        /* Main Workspace */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 20px 32px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(9, 13, 22, 0.8);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-title h1 { font-size: 1.35rem; font-weight: 700; }
+        .header-title p { font-size: 0.85rem; color: var(--text-muted); }
+
+        .content-area { padding: 32px; flex: 1; }
+
+        /* UI Utilities */
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        .btn:hover { background: #2563EB; transform: translateY(-1px); }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+        }
+        .btn-outline:hover { background: rgba(255,255,255,0.05); }
+
+        .badge-pill {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-active { background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-suspended { background: rgba(239, 68, 68, 0.15); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+        }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <aside>
+        <div class="brand">
+            <span class="brand-dot"></span>
+            GymFlow Pro
+        </div>
+        <ul class="nav-links">
+            <li><a href="/" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}">📊 Overview</a></li>
+            <li><a href="/members" class="nav-link {% if active_page == 'members' %}active{% endif %}">👥 Member Hub</a></li>
+            <li><a href="/terminal" class="nav-link {% if active_page == 'terminal' %}active{% endif %}">⚡ Front Desk Terminal</a></li>
+        </ul>
+        <div style="margin-top: auto; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid var(--border);">
+            <div style="font-size: 0.75rem; color: var(--text-muted);">SYSTEM STATUS</div>
+            <div style="font-size: 0.85rem; font-weight: 600; color: #10B981; margin-top: 4px;">● Live SQLite WAL</div>
+        </div>
+    </aside>
+
+    <main>
+        <header>
+            <div class="header-title">
+                <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                <p>{% block page_subtitle %}Enterprise Management Console{% endblock %}</p>
+            </div>
+            <div>
+                <a href="/terminal" class="btn">⚡ Open Scanner</a>
+            </div>
+        </header>
+
+        <div class="content-area">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <script>
+        function showNotification(text, type = 'success') {
+            Toastify({
+                text: text,
+                duration: 3200,
+                gravity: "top",
+                position: "right",
+                style: {
+                    background: type === 'success' ? "#059669" : "#DC2626",
+                    borderRadius: "8px",
+                    fontWeight: "600",
+                    fontSize: "0.9rem"
+                }
+            }).showToast();
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
