@@ -1,158 +1,180 @@
 {% extends "base.html" %}
-{% block page_title %}Member Management Hub{% endblock %}
-{% block page_subtitle %}Search directory, instant member onboarding, and digital pass generation{% endblock %}
+{% block page_title %}Studio Member Directory{% endblock %}
+{% block page_subtitle %}Onboard members with pre-loaded Membership Tiers, assign Personal Coaches, and edit live relationships{% endblock %}
+
+{% block hero_actions %}
+<button class="btn" onclick="openOnboardModal()">+ Onboard Studio Member</button>
+{% endblock %}
 
 {% block head %}
 <style>
-    .hub-actions {
+    .filter-bar {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 24px;
         gap: 16px;
     }
-    .search-input {
-        flex: 1;
-        max-width: 450px;
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        color: white;
-        padding: 12px 16px;
-        border-radius: 8px;
-        outline: none;
+    .search-box {
+        width: 420px;
+        padding: 12px 18px;
+        border-radius: 999px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-taupe);
     }
 
-    .members-table {
+    .dir-table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 0.9rem;
     }
-    .members-table th {
+    .dir-table th {
         text-align: left;
-        padding: 14px 16px;
-        color: var(--text-muted);
-        border-bottom: 1px solid var(--border);
-        font-weight: 600;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--ink-muted);
+        padding: 14px 14px;
+        border-bottom: 1px solid var(--border-taupe);
     }
-    .members-table td {
-        padding: 16px;
-        border-bottom: 1px solid rgba(255,255,255,0.04);
+    .dir-table td {
+        padding: 16px 14px;
+        border-bottom: 1px solid var(--bg-sand);
+        font-size: 0.88rem;
         vertical-align: middle;
     }
-    .members-table tr:hover { background: rgba(255,255,255,0.02); }
 
-    /* Modal Form */
-    .modal {
+    /* Editorial Modal */
+    .modal-backdrop {
         display: none;
         position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.75);
+        inset: 0;
+        background: rgba(20, 20, 20, 0.55);
         backdrop-filter: blur(4px);
         align-items: center;
         justify-content: center;
         z-index: 100;
     }
-    .modal.active { display: flex; }
-    .modal-box {
-        background: var(--bg-card);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        width: 520px;
-        padding: 32px;
+    .modal-backdrop.active { display: flex; }
+    .modal-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-taupe);
+        border-top: 5px solid var(--crimson);
+        border-radius: 16px;
+        width: 580px;
+        padding: 34px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.15);
     }
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 6px; }
-    .form-group input, .form-group select {
-        width: 100%;
-        background: #090D16;
-        border: 1px solid var(--border);
-        color: white;
-        padding: 10px 12px;
-        border-radius: 6px;
-        outline: none;
+    .field-group { margin-bottom: 16px; }
+    .field-group label {
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--ink-muted);
+        margin-bottom: 6px;
     }
+    .field-group input, .field-group select { width: 100%; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="hub-actions">
-    <input type="text" id="memberSearch" class="search-input" placeholder="Search by name, email, or ID..." oninput="handleSearch()">
-    <button class="btn" onclick="openModal()">+ Register New Member</button>
+<div class="filter-bar">
+    <input type="text" id="memberSearch" class="search-box" placeholder="Search by member name, email, or ID..." oninput="filterDirectory()">
+    <div style="font-size: 0.82rem; color: var(--ink-muted);">
+        Tip: You can change any member's <strong>Plan Tier</strong>, <strong>Personal Coach</strong>, or <strong>Status</strong> directly in the table below.
+    </div>
 </div>
 
-<div class="card" style="padding: 0; overflow-x: auto;">
-    <table class="members-table">
+<div class="card" style="padding: 8px 18px;">
+    <table class="dir-table">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>MEMBER NAME</th>
-                <th>CONTACT</th>
-                <th>PLAN</th>
-                <th>ASSIGNED COACH</th>
-                <th>STATUS</th>
-                <th>ACTIONS</th>
+                <th>Member</th>
+                <th>Contact</th>
+                <th>Membership Tier (Editable)</th>
+                <th>Assigned Coach (Editable)</th>
+                <th>Classes</th>
+                <th>Status</th>
+                <th>Atelier Pass</th>
             </tr>
         </thead>
-        <tbody id="memberTableBody">
-            <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Loading members...</td></tr>
+        <tbody id="memberRows">
+            <tr><td colspan="8" style="text-align: center; padding: 28px;">Loading studio roster...</td></tr>
         </tbody>
     </table>
 </div>
 
-<!-- Modal Register Form -->
-<div class="modal" id="addMemberModal">
-    <div class="modal-box">
-        <h2 style="font-size: 1.25rem; margin-bottom: 20px;">Onboard New Member</h2>
-        <form id="onboardForm" onsubmit="submitMember(event)">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <div class="form-group">
-                    <label>First Name</label>
-                    <input type="text" id="fname" required>
+<!-- Onboard Member Modal (Guaranteed Populated Dropdowns) -->
+<div class="modal-backdrop" id="onboardModal">
+    <div class="modal-card">
+        <span class="pill pill-crimson">New Studio Enrollment</span>
+        <h2 style="font-size: 2rem; margin: 6px 0 20px 0;">Onboard Dream Sports Member</h2>
+        <form id="onboardForm" onsubmit="submitNewMember(event)">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div class="field-group">
+                    <label>First Name *</label>
+                    <input type="text" id="fname" required placeholder="e.g. Habib">
                 </div>
-                <div class="form-group">
-                    <label>Last Name</label>
-                    <input type="text" id="lname" required>
+                <div class="field-group">
+                    <label>Last Name *</label>
+                    <input type="text" id="lname" required placeholder="e.g. Loussaief">
                 </div>
             </div>
-            <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" id="email" required>
+
+            <div class="field-group">
+                <label>Email Address *</label>
+                <input type="email" id="email" required placeholder="member@studio.tn">
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <div class="form-group">
-                    <label>Phone Number</label>
-                    <input type="text" id="phone" required placeholder="+216 ...">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div class="field-group">
+                    <label>Phone Number *</label>
+                    <input type="text" id="phone" required value="+216 ">
                 </div>
-                <div class="form-group">
+                <div class="field-group">
                     <label>Gender</label>
                     <select id="gender">
-                        <option value="Male">Male</option>
                         <option value="Female">Female</option>
+                        <option value="Male">Male</option>
                     </select>
                 </div>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <div class="form-group">
-                    <label>Membership Tier</label>
-                    <select id="plan_id">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div class="field-group">
+                    <label>Membership Plan Tier *</label>
+                    <select id="plan_id" required>
                         {% for p in plans %}
-                        <option value="{{ p.id }}">{{ p.name }} (${{ p.price }})</option>
+                        <option value="{{ p.id }}">{{ p.name }} — ${{ "%.0f"|format(p.price) }}/mo</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Personal Coach</label>
+                <div class="field-group">
+                    <label>Assign Personal Coach</label>
                     <select id="trainer_id">
-                        <option value="">None (General Access)</option>
+                        <option value="">Studio General Coaching</option>
                         {% for t in trainers %}
                         <option value="{{ t.id }}">{{ t.fname }} {{ t.lname }} ({{ t.specialty }})</option>
                         {% endfor %}
                     </select>
                 </div>
             </div>
+
+            <div class="field-group">
+                <label>Initial Studio Class Booking (Optional)</label>
+                <select id="class_id">
+                    <option value="">Enroll Later</option>
+                    {% for c in classes %}
+                    <option value="{{ c.id }}">{{ c.title }} — {{ c.schedule_text }} ({{ c.trainer_name }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
             <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
-                <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
-                <button type="submit" class="btn">Complete Registration</button>
+                <button type="button" class="btn btn-outline" onclick="closeOnboardModal()">Cancel</button>
+                <button type="submit" class="btn">Complete Studio Registration</button>
             </div>
         </form>
     </div>
@@ -161,54 +183,87 @@
 
 {% block scripts %}
 <script>
-    let searchDebounceTimer;
+    const STUDIO_PLANS = {{ plans | tojson }};
+    const STUDIO_TRAINERS = {{ trainers | tojson }};
+    let debounceTimer;
 
-    function openModal() { document.getElementById('addMemberModal').classList.add('active'); }
-    function closeModal() { document.getElementById('addMemberModal').classList.remove('active'); }
+    function openOnboardModal() { document.getElementById('onboardModal').classList.add('active'); }
+    function closeOnboardModal() { document.getElementById('onboardModal').classList.remove('active'); }
 
-    async function loadMembers(term = '') {
-        const res = await fetch(`/api/members?q=${encodeURIComponent(term)}`);
+    async function loadDirectory(q = '') {
+        const res = await fetch(`/api/members?q=${encodeURIComponent(q)}`);
         const data = await res.json();
-        const tbody = document.getElementById('memberTableBody');
+        const tbody = document.getElementById('memberRows');
 
         if (data.members.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No members found matching your search.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 28px; color: var(--ink-muted);">No matching studio members found.</td></tr>';
             return;
         }
 
-        tbody.innerHTML = data.members.map(m => `
-            <tr>
-                <td><strong style="color: #60A5FA;">#${String(m.id).padStart(4, '0')}</strong></td>
-                <td>
-                    <div style="font-weight: 600;">${m.fname} ${m.lname}</div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);">Joined ${m.joined_date}</div>
-                </td>
-                <td>
-                    <div>${m.email}</div>
-                    <div style="font-size: 0.78rem; color: var(--text-muted);">${m.phone}</div>
-                </td>
-                <td><span style="font-weight: 500;">${m.plan_name}</span></td>
-                <td><span style="color: var(--text-muted);">${m.trainer_name}</span></td>
-                <td>
-                    <span class="badge-pill ${m.status === 'Active' ? 'badge-active' : 'badge-suspended'}">${m.status}</span>
-                </td>
-                <td>
-                    <a href="/member/${m.id}/badge" target="_blank" class="btn btn-outline" style="padding: 6px 12px; font-size: 0.8rem;">
-                        🎟️ Export Pass
-                    </a>
-                </td>
-            </tr>
-        `).join('');
+        tbody.innerHTML = data.members.map(m => {
+            const planOptions = STUDIO_PLANS.map(p =>
+                `<option value="${p.id}" ${m.plan_id === p.id ? 'selected' : ''}>${p.name} ($${p.price})</option>`
+            ).join('');
+
+            const coachOptions = `<option value="">Unassigned</option>` + STUDIO_TRAINERS.map(t =>
+                `<option value="${t.id}" ${m.trainer_id === t.id ? 'selected' : ''}>${t.fname} ${t.lname}</option>`
+            ).join('');
+
+            return `
+                <tr>
+                    <td><strong style="color: var(--crimson);">#${String(m.id).padStart(4, '0')}</strong></td>
+                    <td>
+                        <div style="font-weight: 700;">${m.fname} ${m.lname}</div>
+                        <div style="font-size: 0.74rem; color: var(--ink-muted);">Joined ${m.joined_date}</div>
+                    </td>
+                    <td>
+                        <div>${m.email}</div>
+                        <div style="font-size: 0.75rem; color: var(--ink-muted);">${m.phone}</div>
+                    </td>
+                    <td>
+                        <select onchange="adminUpdateMember(${m.id}, {plan_id: this.value})">
+                            ${planOptions}
+                        </select>
+                    </td>
+                    <td>
+                        <select onchange="adminUpdateMember(${m.id}, {trainer_id: this.value})">
+                            ${coachOptions}
+                        </select>
+                    </td>
+                    <td><span class="pill pill-sand">${m.class_count} booked</span></td>
+                    <td>
+                        <select onchange="adminUpdateMember(${m.id}, {status: this.value})">
+                            <option value="Active" ${m.status === 'Active' ? 'selected' : ''}>Active</option>
+                            <option value="Suspended" ${m.status === 'Suspended' ? 'selected' : ''}>Suspended</option>
+                        </select>
+                    </td>
+                    <td>
+                        <a href="/member/${m.id}/badge" target="_blank" class="btn btn-outline" style="padding: 6px 14px; font-size: 0.7rem;">
+                            Pass QR
+                        </a>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     }
 
-    function handleSearch() {
-        clearTimeout(searchDebounceTimer);
-        searchDebounceTimer = setTimeout(() => {
-            loadMembers(document.getElementById('memberSearch').value);
-        }, 250);
+    async function adminUpdateMember(memberId, payload) {
+        await fetch(`/api/members/${memberId}/update`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        notify(`Updated Member #${String(memberId).padStart(4, '0')} assignment!`);
     }
 
-    async function submitMember(e) {
+    function filterDirectory() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            loadDirectory(document.getElementById('memberSearch').value);
+        }, 200);
+    }
+
+    async function submitNewMember(e) {
         e.preventDefault();
         const payload = {
             fname: document.getElementById('fname').value,
@@ -217,7 +272,8 @@
             phone: document.getElementById('phone').value,
             gender: document.getElementById('gender').value,
             plan_id: parseInt(document.getElementById('plan_id').value),
-            trainer_id: document.getElementById('trainer_id').value ? parseInt(document.getElementById('trainer_id').value) : null
+            trainer_id: document.getElementById('trainer_id').value ? parseInt(document.getElementById('trainer_id').value) : null,
+            class_id: document.getElementById('class_id').value ? parseInt(document.getElementById('class_id').value) : null
         };
 
         const res = await fetch('/api/members', {
@@ -227,15 +283,15 @@
         });
         const data = await res.json();
         if (data.success) {
-            showNotification(`Member #${data.member_id} successfully created!`);
-            closeModal();
+            notify(`Welcome to Dream Sport! Member #${String(data.member_id).padStart(4, '0')} registered.`);
+            closeOnboardModal();
             document.getElementById('onboardForm').reset();
-            loadMembers();
+            loadDirectory();
         } else {
-            showNotification(data.error || 'Registration failed', 'error');
+            notify(data.error || 'Registration failed', 'error');
         }
     }
 
-    loadMembers();
+    loadDirectory();
 </script>
 {% endblock %}
