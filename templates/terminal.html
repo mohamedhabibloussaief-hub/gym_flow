@@ -1,141 +1,112 @@
 {% extends "base.html" %}
-{% block page_title %}Front Desk Access Terminal{% endblock %}
-{% block page_subtitle %}Instant pass scanner simulation and membership credential verification{% endblock %}
+{% block page_title %}Dream Sport Reception Terminal{% endblock %}
+{% block page_subtitle %}Instant optical pass scanner and live member class & coach verification{% endblock %}
 
 {% block head %}
 <style>
-    .terminal-container {
+    .terminal-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr 1.1fr;
         gap: 32px;
         align-items: start;
     }
-
-    .scanner-box {
-        background: #0D1322;
-        border: 2px dashed #2563EB;
-        border-radius: 16px;
-        padding: 40px;
+    .scanner-pad {
         text-align: center;
-        box-shadow: 0 0 30px rgba(37, 99, 235, 0.1);
+        padding: 44px 32px;
+        border-top: 5px solid var(--crimson);
     }
-
-    .scanner-icon {
-        width: 64px;
-        height: 64px;
-        margin: 0 auto 20px auto;
-        border: 2px solid #3B82F6;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-        box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
-    }
-
-    .terminal-input {
-        width: 100%;
-        max-width: 320px;
-        margin: 20px auto;
-        background: #090D16;
-        border: 1px solid var(--border);
-        padding: 14px 18px;
-        border-radius: 8px;
-        font-size: 1.1rem;
-        color: white;
+    .scan-input {
+        width: 280px;
+        font-size: 1.35rem;
         text-align: center;
-        outline: none;
-        letter-spacing: 2px;
+        letter-spacing: 0.15em;
+        margin: 22px auto;
+        display: block;
+        padding: 14px;
+        border-radius: 999px;
     }
-
-    .verification-card {
-        display: none;
-        border-left: 4px solid var(--success);
-        padding: 24px;
-        animation: fadeIn 0.3s ease;
-    }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-    .sample-badges {
+    .quick-chips {
         display: flex;
-        gap: 8px;
         flex-wrap: wrap;
+        gap: 8px;
         justify-content: center;
-        margin-top: 14px;
+        margin-top: 16px;
     }
-    .badge-chip {
-        background: rgba(255,255,255,0.06);
-        border: 1px solid var(--border);
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-size: 0.8rem;
+    .member-chip {
+        background: var(--bg-sand);
+        border: 1px solid var(--border-taupe);
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 600;
         cursor: pointer;
-        transition: background 0.2s;
+        transition: all 0.15s;
     }
-    .badge-chip:hover { background: rgba(59, 130, 246, 0.2); border-color: var(--primary); }
+    .member-chip:hover {
+        background: var(--crimson);
+        color: white;
+        border-color: var(--crimson);
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="terminal-container">
-    <!-- Scanner Simulation Card -->
-    <div class="card scanner-box">
-        <div class="scanner-icon">⚡</div>
-        <h2 style="font-size: 1.25rem;">Optical / NFC Scanner Simulator</h2>
-        <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 6px;">
-            Enter a Member ID or click a simulated badge pass to verify access.
+<div class="terminal-grid">
+    <div class="card scanner-pad">
+        <span class="pill pill-crimson">Optical / NFC Reception Gate</span>
+        <h2 style="font-size: 2.1rem; margin-top: 10px;">Studio Check-In</h2>
+        <p style="color: var(--ink-muted); font-size: 0.88rem; margin-top: 6px;">
+            Enter a Member ID or click any live member chip below to simulate a badge scan.
         </p>
 
-        <input type="number" id="terminalScanInput" class="terminal-input" placeholder="SCAN ID..." onkeydown="if(event.key==='Enter') executeScan()">
-        <br>
-        <button class="btn" onclick="executeScan()" style="padding: 12px 32px;">Trigger Check-In</button>
+        <input type="number" id="scanIdInput" class="scan-input" placeholder="ID #0001" onkeydown="if(event.key==='Enter') triggerScan()">
+        <button class="btn" onclick="triggerScan()" style="padding: 14px 36px;">Verify Studio Entry</button>
 
-        <div style="margin-top: 28px; border-top: 1px solid var(--border); padding-top: 16px;">
-            <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 8px;">TEST WITH SEED CREDENTIALS</div>
-            <div class="sample-badges">
-                <span class="badge-chip" onclick="simulateScan(1)">Member #0001 (Ahmed)</span>
-                <span class="badge-chip" onclick="simulateScan(2)">Member #0002 (Samir)</span>
-                <span class="badge-chip" onclick="simulateScan(3)">Member #0003 (Linda)</span>
+        <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--border-taupe);">
+            <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--ink-muted); margin-bottom: 10px;">
+                Live Seeded Studio Members (Click to Test)
+            </div>
+            <div class="quick-chips">
+                {% for m in sample_members %}
+                <span class="member-chip" onclick="quickScan({{ m.id }})">#{{ "%04d"|format(m.id) }} {{ m.fname }} {{ m.lname }}</span>
+                {% endfor %}
             </div>
         </div>
     </div>
 
-    <!-- Verification Output View -->
     <div>
-        <div class="card" id="waitingCard" style="text-align: center; padding: 60px 24px; color: var(--text-muted);">
-            <div style="font-size: 2.5rem; margin-bottom: 12px;">🛡️</div>
-            <h3>Awaiting Gate Scan</h3>
-            <p style="font-size: 0.85rem; margin-top: 4px;">Verified credentials and gate clearance will appear here.</p>
+        <div class="card" id="idleReceptionCard" style="text-align: center; padding: 72px 32px;">
+            <span class="pill pill-sand">Reception Standby</span>
+            <h2 style="font-size: 1.9rem; margin-top: 12px;">Awaiting Studio Pass</h2>
+            <p style="color: var(--ink-muted); font-size: 0.88rem; margin-top: 6px;">
+                Member tier, assigned personal coach, and enrolled Barre classes will display upon scan.
+            </p>
         </div>
 
-        <div class="card verification-card" id="resultCard">
-            <div style="display: flex; justify-content: space-between; align-items: start;">
+        <div class="card" id="activeClearanceCard" style="display: none; border-top: 5px solid var(--sage);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                    <span class="badge-pill badge-active" id="resStatusPill">ACCESS GRANTED</span>
-                    <h2 id="resName" style="font-size: 1.4rem; margin-top: 8px;">Ahmed Monji</h2>
-                    <p style="color: var(--text-muted); font-size: 0.85rem;" id="resMemberId">ID #0001</p>
+                    <span class="pill pill-sage" id="clrPill">STUDIO ACCESS GRANTED</span>
+                    <h2 id="clrName" style="font-size: 2.3rem; margin-top: 8px;">-</h2>
+                    <p id="clrId" style="color: var(--ink-muted); font-size: 0.85rem;">ID #0001</p>
                 </div>
-                <div style="font-size: 2.5rem;" id="resIcon">✅</div>
+                <a id="clrBadgeLink" href="#" target="_blank" class="btn btn-outline" style="font-size: 0.72rem;">View Pass QR</a>
             </div>
 
-            <hr style="border: none; border-top: 1px solid var(--border); margin: 20px 0;">
+            <hr style="border: none; border-top: 1px solid var(--border-taupe); margin: 22px 0;">
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px;">
                 <div>
-                    <div style="font-size: 0.78rem; color: var(--text-muted);">SUBSCRIPTION TIER</div>
-                    <div style="font-weight: 600; font-size: 0.95rem;" id="resPlan">Athlete Tier</div>
+                    <div style="font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-muted);">Membership Tier</div>
+                    <div id="clrPlan" style="font-weight: 700; font-size: 1rem; margin-top: 4px;">-</div>
                 </div>
                 <div>
-                    <div style="font-size: 0.78rem; color: var(--text-muted);">ASSIGNED COACH</div>
-                    <div style="font-weight: 600; font-size: 0.95rem;" id="resTrainer">Khalil Hajlaoui</div>
+                    <div style="font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-muted);">Personal Barre Coach</div>
+                    <div id="clrCoach" style="font-weight: 700; font-size: 1rem; margin-top: 4px;">-</div>
                 </div>
-                <div>
-                    <div style="font-size: 0.78rem; color: var(--text-muted);">TERMINAL POINT</div>
-                    <div style="font-weight: 600; font-size: 0.95rem;">Gate Terminal Alpha</div>
-                </div>
-                <div>
-                    <div style="font-size: 0.78rem; color: var(--text-muted);">VERIFICATION TIME</div>
-                    <div style="font-weight: 600; font-size: 0.95rem;" id="resTimestamp">Just now</div>
+                <div style="grid-column: span 2;">
+                    <div style="font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-muted);">Enrolled Studio Classes</div>
+                    <div id="clrClasses" style="font-weight: 600; font-size: 0.92rem; margin-top: 4px; color: var(--crimson);">-</div>
                 </div>
             </div>
         </div>
@@ -145,13 +116,13 @@
 
 {% block scripts %}
 <script>
-    function simulateScan(id) {
-        document.getElementById('terminalScanInput').value = id;
-        executeScan();
+    function quickScan(id) {
+        document.getElementById('scanIdInput').value = id;
+        triggerScan();
     }
 
-    async function executeScan() {
-        const input = document.getElementById('terminalScanInput');
+    async function triggerScan() {
+        const input = document.getElementById('scanIdInput');
         const id = input.value.trim();
         if (!id) return;
 
@@ -162,34 +133,31 @@
         });
         const data = await res.json();
 
-        const waitingCard = document.getElementById('waitingCard');
-        const resultCard = document.getElementById('resultCard');
-
-        waitingCard.style.display = 'none';
-        resultCard.style.display = 'block';
+        document.getElementById('idleReceptionCard').style.display = 'none';
+        const card = document.getElementById('activeClearanceCard');
+        card.style.display = 'block';
 
         if (data.success) {
-            resultCard.style.borderLeftColor = '#10B981';
-            document.getElementById('resStatusPill').className = 'badge-pill badge-active';
-            document.getElementById('resStatusPill').innerText = 'ACCESS GRANTED';
-            document.getElementById('resIcon').innerText = '✅';
-            document.getElementById('resName').innerText = data.name;
-            document.getElementById('resMemberId').innerText = `ID #${String(data.member_id).padStart(4, '0')}`;
-            document.getElementById('resPlan').innerText = data.plan;
-            document.getElementById('resTrainer').innerText = data.trainer;
-            document.getElementById('resTimestamp').innerText = new Date().toLocaleTimeString();
-            showNotification(`Access Approved: ${data.name}`);
+            card.style.borderTopColor = '#1E6F50';
+            document.getElementById('clrPill').className = 'pill pill-sage';
+            document.getElementById('clrPill').innerText = 'STUDIO ACCESS GRANTED';
+            document.getElementById('clrName').innerText = data.name;
+            document.getElementById('clrId').innerText = `Member #${String(data.member_id).padStart(4, '0')} • Checked in at ${new Date().toLocaleTimeString()}`;
+            document.getElementById('clrPlan').innerText = data.plan;
+            document.getElementById('clrCoach').innerText = data.trainer;
+            document.getElementById('clrClasses').innerText = (data.classes && data.classes.length) ? data.classes.join('  •  ') : 'General Studio Access';
+            document.getElementById('clrBadgeLink').href = `/member/${data.member_id}/badge`;
+            notify(`Welcome to Dream Sport, ${data.name}!`);
         } else {
-            resultCard.style.borderLeftColor = '#EF4444';
-            document.getElementById('resStatusPill').className = 'badge-pill badge-suspended';
-            document.getElementById('resStatusPill').innerText = 'ACCESS DENIED';
-            document.getElementById('resIcon').innerText = '⛔';
-            document.getElementById('resName').innerText = data.error || 'Denied';
-            document.getElementById('resMemberId').innerText = `ID #${id}`;
-            document.getElementById('resPlan').innerText = 'N/A';
-            document.getElementById('resTrainer').innerText = 'N/A';
-            document.getElementById('resTimestamp').innerText = new Date().toLocaleTimeString();
-            showNotification(data.error || 'Access Denied', 'error');
+            card.style.borderTopColor = '#C8102E';
+            document.getElementById('clrPill').className = 'pill pill-crimson';
+            document.getElementById('clrPill').innerText = 'ENTRY DECLINED';
+            document.getElementById('clrName').innerText = data.error || 'Unknown ID';
+            document.getElementById('clrId').innerText = `Attempted ID #${id}`;
+            document.getElementById('clrPlan').innerText = '-';
+            document.getElementById('clrCoach').innerText = '-';
+            document.getElementById('clrClasses').innerText = '-';
+            notify(data.error || 'Access Denied', 'error');
         }
         input.value = '';
     }
