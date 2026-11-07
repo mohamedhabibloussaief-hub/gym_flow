@@ -1,6 +1,6 @@
-# Pure Barre Atelier — Studio Management, Multi-Agent Simulation & Semantic Web Suite
+# Dream Sports Atelier — Studio Management, Multi-Agent Simulation & Semantic Web Suite
 
-Pure Barre Atelier is an editorial luxury studio management platform engineered with **Python (Flask)**, **SQLite (WAL Mode)**, **Autonomous Simulation Agents**, and a **Semantic Web Triplestore Copilot**.
+Dream Sport Atelier is an editorial luxury studio management platform engineered with **Python (Flask)**, **SQLite (WAL Mode)**, **Autonomous Simulation Agents**, and a **Semantic Web Triplestore Copilot**.
 
 ---
 
