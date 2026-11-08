@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block page_title %}Executive Studio Console{% endblock %}
+{% block page_subtitle %}Director and operations management sign-in for Dream Sport Atelier{% endblock %}
+
+{% block content %}
+<div style="max-width: 480px; margin: 40px auto;">
+    <div class="card" style="border-top: 5px solid var(--crimson); padding: 36px;">
+        <span class="pill pill-crimson">Enterprise Administration</span>
+        <h2 style="font-size: 2.1rem; margin: 8px 0 20px 0;">Executive Director Sign In</h2>
+
+        {% if error %}
+        <div style="background: rgba(200,16,46,0.1); border: 1px solid var(--crimson); color: var(--crimson); padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px;">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="/admin/login">
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-muted); margin-bottom: 6px;">Executive Email</label>
+                <input type="email" name="email" id="adminEmail" required style="width: 100%;" value="admin@dreamsport.tn">
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-muted); margin-bottom: 6px;">Master Passcode</label>
+                <input type="password" name="password" id="adminPassword" required style="width: 100%;" value="admin123">
+            </div>
+
+            <button type="submit" class="btn" style="width: 100%; justify-content: center; padding: 12px;">Enter Executive Console</button>
+        </form>
+
+        <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--border-taupe); text-align: center;">
+            <p style="font-size: 0.75rem; color: var(--ink-muted);">Pre-configured credentials: <code>admin@dreamsport.tn</code> / <code>admin123</code></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

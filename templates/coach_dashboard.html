@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block page_title %}Instructor Cockpit{% endblock %}
+{% block page_subtitle %}Coach {{ coach.fname }} {{ coach.lname }} ({{ coach.specialty }}) — Performance telemetry, active class rosters, and 1-on-1 client dossiers{% endblock %}
+
+{% block head %}
+<style>
+    .cockpit-grid {
+        display: grid;
+        grid-template-columns: 1.25fr 1fr;
+        gap: 26px;
+        margin-bottom: 30px;
+    }
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 18px;
+        margin-bottom: 24px;
+    }
+    .kpi-num { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 700; margin: 4px 0; }
+    .roster-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
+    .roster-table th { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border-taupe); color: var(--ink-muted); text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.12em; }
+    .roster-table td { padding: 12px 8px; border-bottom: 1px solid var(--bg-sand); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="kpi-row">
+    <div class="card">
+        <span class="pill pill-sand">Capacity Gauge</span>
+        <div class="kpi-num" style="color: var(--crimson);">{{ coach.active_clients }} / {{ coach.max_clients }}</div>
+        <p style="font-size: 0.78rem; color: var(--ink-muted);">Active 1-on-1 Client Load</p>
+    </div>
+
+    <div class="card">
+        <span class="pill pill-crimson">Earned Commission</span>
+        <div class="kpi-num" style="color: var(--sage);">${{ "%.2f"|format(earned_comm) }}</div>
+        <p style="font-size: 0.78rem; color: var(--ink-muted);">Client Volume (${{ "%.0f"|format(client_vol) }}) @ {{ "%.0f"|format(coach.commission_rate * 100) }}%</p>
+    </div>
+
+    <div class="card">
+        <span class="pill pill-sand">Base Retainer</span>
+        <div class="kpi-num">${{ "%.0f"|format(coach.base_retainer or 1000) }}</div>
+        <p style="font-size: 0.78rem; color: var(--ink-muted);">Guaranteed Monthly Base</p>
+    </div>
+
+    <div class="card">
+        <span class="pill pill-sage">Estimated Payout</span>
+        <div class="kpi-num">${{ "%.2f"|format((coach.base_retainer or 1000) + earned_comm) }}</div>
+        <p style="font-size: 0.78rem; color: var(--ink-muted);">Retainer + All Commissions</p>
+    </div>
+</div>
+
+<div class="cockpit-grid">
+    <div>
+        <div class="card" style="margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div>
+                    <span class="pill pill-crimson">Curriculum</span>
+                    <h2 style="font-size: 1.6rem; margin-top: 2px;">My Scheduled Barre Classes</h2>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <label style="font-size: 0.75rem; color: var(--ink-muted);">Accepting Clients:</label>
+                    <select onchange="toggleAvailability(this.value)" style="padding: 4px 8px; font-size: 0.75rem;">
+                        <option value="1" {% if coach.accepting_clients == 1 %}selected{% endif %}>ON (Open)</option>
+                        <option value="0" {% if coach.accepting_clients == 0 %}selected{% endif %}>OFF (Full)</option>
+                    </select>
+                </div>
+            </div>
+
+            {% for c in classes %}
+            <div style="background: var(--bg-cream); border: 1px solid var(--border-taupe); border-radius: 10px; padding: 18px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h3 style="font-size: 1.3rem;">{{ c.title }}</h3>
+                        <p style="font-size: 0.8rem; color: var(--ink-muted);">{{ c.schedule_text }} • {{ c.room_name }}</p>
+                    </div>
+                    <span class="pill pill-sand">{{ c.enrolled_count }} / {{ c.capacity }} Enrolled</span>
+                </div>
+
+                <table class="roster-table">
+                    <thead>
+                        <tr>
+                            <th>Member</th>
+                            <th>Tier</th>
+                            <th>Health / Mobility Flag</th>
+                            <th>Attendance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in c.roster %}
+                        <tr>
+                            <td>
+                                <strong>{{ m.full_name }}</strong>
+                                <div style="font-size: 0.72rem; color: var(--ink-muted);">{{ m.email }}</div>
+                            </td>
+                            <td><span class="pill pill-sand">{{ m.plan_name }}</span></td>
+                            <td>
+                                {% if m.injury_notes %}
+                                <span class="pill pill-amber" title="{{ m.injury_notes }}">⚠️ {{ m.injury_notes[:24] }}...</span>
+                                {% else %}
+                                <span style="color: var(--ink-muted); font-size: 0.75rem;">None</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn {% if m.today_status == 'Present' %}btn{% else %}btn-outline{% endif %}" style="padding: 4px 10px; font-size: 0.68rem;" onclick="setAttendance({{ c.id }}, {{ m.id }}, 'Present')">✓ Present</button>
+                                <button class="btn btn-sand" style="padding: 4px 10px; font-size: 0.68rem;" onclick="setAttendance({{ c.id }}, {{ m.id }}, 'No-Show')">No-Show</button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" style="color: var(--ink-muted); text-align: center;">No members booked in this class yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p style="color: var(--ink-muted); font-size: 0.85rem;">No studio classes currently assigned to you.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div>
+        <div class="card" style="margin-bottom: 24px;">
+            <span class="pill pill-crimson">Inbox Queue</span>
+            <h2 style="font-size: 1.5rem; margin: 4px 0 14px 0;">1-on-1 Private Requests</h2>
+            {% for r in requests %}
+            <div style="background: var(--bg-cream); border: 1px solid var(--border-taupe); border-radius: 8px; padding: 12px; margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 0.9rem;">
+                    <span>{{ r.member_name }}</span>
+                    <span class="pill {% if r.status == 'Confirmed' %}pill-sage{% elif r.status == 'Pending' %}pill-amber{% else %}pill-sand{% endif %}">{{ r.status }}</span>
+                </div>
+                <div style="font-size: 0.78rem; color: var(--ink-muted); margin-top: 2px;">{{ r.focus_area }}</div>
+                <div style="font-size: 0.78rem; font-weight: 600; margin-top: 4px;">Requested: {{ r.session_datetime }}</div>
+                {% if r.injury_notes %}
+                <div style="font-size: 0.72rem; color: var(--amber); margin-top: 3px;">⚠️ {{ r.injury_notes }}</div>
+                {% endif %}
+                <div style="display: flex; gap: 6px; margin-top: 10px;">
+                    {% if r.status == 'Pending' %}
+                    <button class="btn" style="padding: 4px 12px; font-size: 0.68rem;" onclick="respondPrivate({{ r.id }}, 'Confirmed')">Accept & Lock Slot</button>
+                    <button class="btn btn-outline" style="padding: 4px 12px; font-size: 0.68rem;" onclick="respondPrivate({{ r.id }}, 'Declined')">Decline</button>
+                    {% elif r.status == 'Confirmed' %}
+                    <button class="btn btn-outline" style="padding: 4px 12px; font-size: 0.68rem;" onclick="respondPrivate({{ r.id }}, 'Completed')">Mark Session Completed</button>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <p style="font-size: 0.82rem; color: var(--ink-muted);">No pending private session requests.</p>
+            {% endfor %}
+        </div>
+
+        <div class="card">
+            <span class="pill pill-sand">My Students</span>
+            <h2 style="font-size: 1.5rem; margin: 4px 0 12px 0;">Assigned 1-on-1 Clients ({{ clients|length }})</h2>
+            {% for cl in clients %}
+            <div style="padding: 10px 0; border-bottom: 1px solid var(--bg-sand); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 700; font-size: 0.9rem;">{{ cl.fname }} {{ cl.lname }}</div>
+                    <div style="font-size: 0.75rem; color: var(--ink-muted);">{{ cl.plan_name }} • {{ cl.phone }}</div>
+                    {% if cl.injury_notes %}
+                    <div style="font-size: 0.72rem; color: var(--amber);">⚠️ {{ cl.injury_notes }}</div>
+                    {% endif %}
+                </div>
+                <span class="pill pill-sage">Active Client</span>
+            </div>
+            {% else %}
+            <p style="font-size: 0.82rem; color: var(--ink-muted);">No 1-on-1 clients assigned yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function setAttendance(classId, memberId, status) {
+        await fetch('/api/classes/attendance', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ class_id: classId, member_id: memberId, status: status })
+        });
+        notify(`Member marked as ${status}!`);
+        setTimeout(() => window.location.reload(), 500);
+    }
+
+    async function respondPrivate(sessionId, status) {
+        await fetch('/api/private-session/respond', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ session_id: sessionId, status: status })
+        });
+        notify(`Session updated to ${status}`);
+        setTimeout(() => window.location.reload(), 600);
+    }
+
+    async function toggleAvailability(val) {
+        await fetch('/api/coach/availability', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ accepting: parseInt(val) })
+        });
+        notify("Client acceptance status updated!");
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+{% block page_title %}Studio Financial Ledger & Capital Allocator{% endblock %}
+{% block page_subtitle %}Audit dynamic coach commissions, calculate net operating margin, and simulate discretionary expense distributions with locked payroll{% endblock %}
+
+{% block head %}
+<style>
+    .fin-grid {
+        display: grid;
+        grid-template-columns: 1.35fr 1fr;
+        gap: 28px;
+        margin-bottom: 32px;
+    }
+    .fin-kpi {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 18px;
+        margin-bottom: 24px;
+    }
+    .kpi-num { font-family: 'Cormorant Garamond', serif; font-size: 2.3rem; font-weight: 700; margin: 4px 0; }
+    .fin-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 10px; }
+    .fin-table th { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border-taupe); color: var(--ink-muted); text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.12em; }
+    .fin-table td { padding: 12px 8px; border-bottom: 1px solid var(--bg-sand); }
+    .slider-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 14px; }
+    .slider-row label { font-size: 0.82rem; font-weight: 600; width: 180px; }
+    .slider-row input[type="range"] { flex: 1; accent-color: var(--crimson); }
+    .slider-val { font-size: 0.85rem; font-weight: 700; width: 110px; text-align: right; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fin-kpi">
+    <div class="card">
+        <span class="pill pill-sand">Gross Studio Revenue</span>
+        <div class="kpi-num" style="color: var(--sage);">{{ "%.2f"|format(gross_rev) }} DT</div>
+        <p style="font-size: 0.78rem; color: var(--ink-muted);">MTD Member Subscriptions</p>
+    </div>
+
+    <div class="card">
+        <span class="pill pill-crimson">Locked Staff Payroll</span>
+        <div class="kpi-num" style="color: var(--crimson);">{{ "%.2f"|format(total_staff_payroll) }} DT</div>
+        <p style="font-size: 0.78rem; color: var(--ink-muted);">{{ "%.1f"|format(locked_pct) }}% of Gross Revenue</p>
+    </div>
+
+    <div class="card">
+        <span class="pill pill-sand">Total Commissions</span>
+        <div class="kpi-num">{{ "%.2f"|format(total_commissions) }} DT</div>
+        <p style="font-size: 0.78rem; color: var(--ink-muted);">Earned Client & Private Splits</p>
+    </div>
+
+    <div class="card">
+        <span class="pill pill-sage">Net Operating Margin</span>
+        <div class="kpi-num" style="color: {% if gross_rev >= total_staff_payroll %}var(--sage){% else %}var(--crimson){% endif %};">
+            {{ "%.2f"|format(gross_rev - total_staff_payroll) }} DT
+        </div>
+        <p style="font-size: 0.78rem; color: var(--ink-muted);">Pre-Discretionary Allocation</p>
+    </div>
+</div>
+
+<div class="fin-grid">
+    <div>
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div>
+                    <span class="pill pill-crimson">Staff Ledger</span>
+                    <h2 style="font-size: 1.6rem; margin-top: 2px;">Instructor Payroll & Commission Ledger</h2>
+                </div>
+                <div style="font-size: 0.78rem; color: var(--ink-muted);">Audited in real-time</div>
+            </div>
+
+            <table class="fin-table">
+                <thead>
+                    <tr>
+                        <th>Instructor</th>
+                        <th>Clients</th>
+                        <th>Rate (%)</th>
+                        <th>Commission</th>
+                        <th>Retainer</th>
+                        <th>Total Payout</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in trainers %}
+                    <tr>
+                        <td>
+                            <strong>{{ t.fname }} {{ t.lname }}</strong>
+                            <div style="font-size: 0.72rem; color: var(--ink-muted);">{{ t.specialty }}</div>
+                        </td>
+                        <td><span class="pill pill-sand">{{ t.active_clients }} active</span></td>
+                        <td>
+                            <input type="number" step="0.01" min="0.05" max="0.50" id="rate_{{ t.id }}" value="{{ t.commission_rate }}" style="width: 70px; padding: 4px 6px; font-size: 0.8rem;">
+                        </td>
+                        <td><strong style="color: var(--crimson);">{{ "%.2f"|format(t.earned_commission) }} DT</strong></td>
+                        <td>
+                            <input type="number" step="25" min="0" id="retainer_{{ t.id }}" value="{{ '%.0f'|format(t.base_retainer) }}" style="width: 85px; padding: 4px 6px; font-size: 0.8rem;">
+                        </td>
+                        <td><strong style="color: var(--sage);">{{ "%.2f"|format(t.total_payout) }} DT</strong></td>
+                        <td>
+                            <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.68rem;" onclick="saveCoachRate({{ t.id }})">Save</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div>
+        <div class="card">
+            <span class="pill pill-sand">Expense Planning</span>
+            <h2 style="font-size: 1.6rem; margin: 4px 0 6px 0;">Donut Budget Allocator Simulator</h2>
+            <p style="font-size: 0.8rem; color: var(--ink-muted); margin-bottom: 16px;">
+                Staff Payroll & Commissions are contractual liabilities and are <strong>locked at {{ "%.1f"|format(locked_pct) }}%</strong>. Distribute the remaining discretionary revenue below.
+            </p>
+
+            <div style="max-width: 260px; margin: 0 auto 20px auto;">
+                <canvas id="budgetDonutChart" height="260"></canvas>
+            </div>
+
+            <div style="background: var(--bg-cream); border: 1px solid var(--border-taupe); border-radius: 10px; padding: 18px;">
+                <div class="slider-row" style="opacity: 0.85;">
+                    <label>Staff Payroll & Comm.:</label>
+                    <input type="range" disabled min="0" max="100" value="{{ locked_pct }}">
+                    <div class="slider-val" style="color: var(--crimson);">{{ "%.1f"|format(locked_pct) }}% ({{ "%.0f"|format(total_staff_payroll) }} DT)</div>
+                </div>
+
+                <div class="slider-row">
+                    <label>Cleaning & Studio Hygiene:</label>
+                    <input type="range" id="slClean" min="0" max="40" value="{{ budget.clean if budget else 8 }}" oninput="updateBudgetSimulation()">
+                    <div class="slider-val" id="valClean">{{ budget.clean if budget else 8 }}%</div>
+                </div>
+
+                <div class="slider-row">
+                    <label>Studio Rent & Power:</label>
+                    <input type="range" id="slRent" min="0" max="40" value="{{ budget.rent if budget else 18 }}" oninput="updateBudgetSimulation()">
+                    <div class="slider-val" id="valRent">{{ budget.rent if budget else 18 }}%</div>
+                </div>
+
+                <div class="slider-row">
+                    <label>New Equipment (Bars/Plates):</label>
+                    <input type="range" id="slEquip" min="0" max="40" value="{{ budget.equip if budget else 12 }}" oninput="updateBudgetSimulation()">
+                    <div class="slider-val" id="valEquip">{{ budget.equip if budget else 12 }}%</div>
+                </div>
+
+                <div class="slider-row">
+                    <label>Gym's Emergency Funds:</label>
+                    <input type="range" id="slEmerg" min="0" max="40" value="{{ budget.emerg if budget else 7 }}" oninput="updateBudgetSimulation()">
+                    <div class="slider-val" id="valEmerg" style="color: var(--amber);">{{ budget.emerg if budget else 7 }}%</div>
+                </div>
+
+                <div class="slider-row">
+                    <label>Retained Studio Profit:</label>
+                    <input type="range" id="slProfit" min="0" max="40" value="{{ budget.profit if budget else 5 }}" oninput="updateBudgetSimulation()">
+                    <div class="slider-val" id="valProfit" style="color: var(--sage);">{{ budget.profit if budget else 5 }}%</div>
+                </div>
+
+                <div id="allocationAlert" style="margin-top: 14px; padding: 10px; border-radius: 6px; font-size: 0.78rem; text-align: center; font-weight: 600;"></div>
+
+                <button type="button" class="btn" style="width: 100%; justify-content: center; margin-top: 14px;" onclick="saveBudgetAllocation()">
+                    Save Budget Allocation
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const GROSS_REVENUE = {{ gross_rev }};
+    const LOCKED_PCT = {{ locked_pct }};
+    let donutChart = null;
+
+    async function saveBudgetAllocation() {
+        const payload = {
+            clean: parseFloat(document.getElementById('slClean').value),
+            rent: parseFloat(document.getElementById('slRent').value),
+            equip: parseFloat(document.getElementById('slEquip').value),
+            emerg: parseFloat(document.getElementById('slEmerg').value),
+            profit: parseFloat(document.getElementById('slProfit').value)
+        };
+        const res = await fetch('/api/admin/budget', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+            notify("Budget allocation saved to studio database!");
+        }
+    }
+
+    function initBudgetChart() {
+        const ctx = document.getElementById('budgetDonutChart').getContext('2d');
+        donutChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Staff Payroll (Locked)', 'Cleaning', 'Rent & Utilities', 'Equipment Capex', 'Emergency Funds', 'Retained Profit'],
+                datasets: [{
+                    data: [LOCKED_PCT, 8, 18, 12, 7, 5],
+                    backgroundColor: ['#C8102E', '#6E6A64', '#141414', '#3B82F6', '#D97706', '#1E6F50'],
+                    borderWidth: 2,
+                    borderColor: '#FFFFFF'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                cutout: '65%'
+            }
+        });
+        updateBudgetSimulation();
+    }
+
+    function updateBudgetSimulation() {
+        const c = parseFloat(document.getElementById('slClean').value);
+        const r = parseFloat(document.getElementById('slRent').value);
+        const e = parseFloat(document.getElementById('slEquip').value);
+        const em = parseFloat(document.getElementById('slEmerg').value);
+        const p = parseFloat(document.getElementById('slProfit').value);
+
+        const totalPct = LOCKED_PCT + c + r + e + em + p;
+        
+        document.getElementById('valClean').innerText = `${c}% (${Math.round(GROSS_REVENUE * c / 100)} DT)`;
+        document.getElementById('valRent').innerText = `${r}% (${Math.round(GROSS_REVENUE * r / 100)} DT)`;
+        document.getElementById('valEquip').innerText = `${e}% (${Math.round(GROSS_REVENUE * e / 100)} DT)`;
+        document.getElementById('valEmerg').innerText = `${em}% (${Math.round(GROSS_REVENUE * em / 100)} DT)`;
+        document.getElementById('valProfit').innerText = `${p}% (${Math.round(GROSS_REVENUE * p / 100)} DT)`;
+
+        if (donutChart) {
+            donutChart.data.datasets[0].data = [LOCKED_PCT, c, r, e, em, p];
+            donutChart.update();
+        }
+
+        const alertEl = document.getElementById('allocationAlert');
+        if (Math.abs(totalPct - 100) < 0.5) {
+            alertEl.style.background = 'rgba(30, 111, 80, 0.15)';
+            alertEl.style.color = 'var(--sage)';
+            alertEl.innerText = `Total Allocation: 100% Perfectly Balanced ($${Math.round(GROSS_REVENUE).toLocaleString()})`;
+        } else if (totalPct > 100) {
+            alertEl.style.background = 'rgba(200, 16, 46, 0.15)';
+            alertEl.style.color = 'var(--crimson)';
+            alertEl.innerText = `Over-allocated by ${(totalPct - 100).toFixed(1)}% ($${Math.round(GROSS_REVENUE * (totalPct - 100)/100).toLocaleString()})`;
+        } else {
+            alertEl.style.background = 'rgba(217, 119, 6, 0.15)';
+            alertEl.style.color = 'var(--amber)';
+            alertEl.innerText = `Remaining unallocated buffer: ${(100 - totalPct).toFixed(1)}% ($${Math.round(GROSS_REVENUE * (100 - totalPct)/100).toLocaleString()})`;
+        }
+    }
+
+    async function saveCoachRate(trainerId) {
+        const rate = parseFloat(document.getElementById(`rate_${trainerId}`).value);
+        const retainer = parseFloat(document.getElementById(`retainer_${trainerId}`).value);
+        const res = await fetch('/api/admin/rates', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                trainer_id: trainerId,
+                commission_rate: rate,
+                base_retainer: retainer
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            notify("Coach salary & commission saved! Recalculating ledger...");
+            setTimeout(() => window.location.reload(), 700);
+        }
+    }
+
+    initBudgetChart();
+</script>
+{% endblock %}

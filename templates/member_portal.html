@@ -1,0 +1,451 @@
+{% extends "base.html" %}
+{% block page_title %}Atelier Client Workspace{% endblock %}
+{% block page_subtitle %}Welcome back, {{ member.fname }}! Manage your Barre sessions, personal coaching, and digital badge pass{% endblock %}
+
+{% block hero_actions %}
+<button class="btn" onclick="openPassModal()">🎟️ My Digital Pass</button>
+{% endblock %}
+
+{% block head %}
+<style>
+    .portal-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 28px;
+        margin-bottom: 32px;
+    }
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+        margin-bottom: 24px;
+    }
+    .kpi-sub { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-muted); }
+    .kpi-val { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 700; margin: 4px 0; }
+
+    .schedule-card {
+        padding: 16px;
+        border: 1px solid var(--border-taupe);
+        border-radius: 10px;
+        background: var(--bg-surface);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        transition: transform 0.15s;
+    }
+    .schedule-card:hover { transform: translateX(2px); border-color: var(--crimson); }
+
+    .modal-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(20, 20, 20, 0.6);
+        backdrop-filter: blur(4px);
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+    }
+    .modal-backdrop.active { display: flex; }
+    .modal-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-taupe);
+        border-top: 5px solid var(--crimson);
+        border-radius: 16px;
+        width: 580px;
+        max-width: 92%;
+        max-height: 85vh;
+        overflow-y: auto;
+        padding: 32px;
+    }
+
+    .copilot-box {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-taupe);
+        border-top: 4px solid var(--crimson);
+        border-radius: 12px;
+        padding: 20px;
+    }
+    .chat-scroll {
+        height: 260px;
+        overflow-y: auto;
+        background: var(--bg-cream);
+        border-radius: 8px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+    .bubble { padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; line-height: 1.45; max-width: 88%; }
+    .bubble-bot { background: #FFFFFF; border: 1px solid var(--border-taupe); align-self: flex-start; }
+    .bubble-user { background: var(--crimson); color: white; align-self: flex-end; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="kpi-row">
+    <div class="card">
+        <span class="kpi-sub">Subscription Tier</span>
+        <div class="kpi-val" style="color: var(--crimson);">{{ member.plan_name }}</div>
+        <p style="font-size: 0.78rem; color: var(--ink-muted);">${{ "%.0f"|format(member.plan_price) }}/mo • {{ member.perks }}</p>
+    </div>
+
+    <div class="card">
+        <span class="kpi-sub">Monthly Class Allowance</span>
+        <div class="kpi-val">
+            {% if member.monthly_class_limit == 0 %}
+            <span style="color: var(--sage);">Unlimited</span>
+            {% else %}
+            {{ member.classes_used_this_month }} / {{ member.monthly_class_limit }}
+            {% endif %}
+        </div>
+        <p style="font-size: 0.78rem; color: var(--ink-muted);">
+            {% if member.monthly_class_limit == 0 %}
+            Full VIP Studio Access
+            {% else %}
+            {{ member.monthly_class_limit - member.classes_used_this_month }} sessions remaining this cycle
+            {% endif %}
+        </p>
+    </div>
+
+    <div class="card">
+        <span class="kpi-sub">Facility & Lifting Status</span>
+        <div class="kpi-val" style="color: var(--sage); font-size: 1.8rem; display: flex; align-items: center; gap: 8px;">
+            <span style="width: 12px; height: 12px; background: #1E6F50; border-radius: 50%;"></span>
+            Open (06:00 - 22:00)
+        </div>
+        <p style="font-size: 0.78rem; color: var(--ink-muted);">Free Lifting Floor: Unrestricted</p>
+    </div>
+</div>
+
+<div class="portal-grid">
+    <div>
+        <div class="card" style="margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <span class="pill pill-sand">1-on-1 Mentor</span>
+                    <h2 style="font-size: 1.7rem; margin-top: 4px;">Personal Barre Coach</h2>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-outline" style="font-size: 0.7rem;" onclick="openPrivateBookModal()">Book 1-on-1 Session</button>
+                    <button class="btn btn-sand" style="font-size: 0.7rem;" onclick="openCoachSwitchModal()">Explore / Switch Coach</button>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: center; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-taupe);">
+                <div style="width: 58px; height: 58px; border-radius: 50%; background: var(--bg-sand); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; color: var(--crimson);">
+                    {{ member.trainer_name[0] if member.trainer_name else "S" }}
+                </div>
+                <div>
+                    <div style="font-size: 1.25rem; font-weight: 700;">{{ member.trainer_name or "Studio General Staff" }}</div>
+                    <div style="font-size: 0.85rem; color: var(--ink-muted);">{{ member.trainer_specialty or "Pure Barre Certified Instructor" }}</div>
+                    <div style="font-size: 0.78rem; color: var(--ink-muted); margin-top: 2px;">{{ member.trainer_email or "coach@dreamsport.tn" }} • {{ member.trainer_phone or "+216 20 000 000" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div>
+                    <span class="pill pill-amber">Clinical Profile</span>
+                    <h2 style="font-size: 1.5rem; margin-top: 2px;">Mobility & Injury Restrictions</h2>
+                </div>
+                <button class="btn btn-outline" style="font-size: 0.7rem;" onclick="saveHealthNotes()">Update Notes</button>
+            </div>
+            <p style="font-size: 0.82rem; color: var(--ink-muted); margin-bottom: 8px;">
+                These clinical notes are displayed on your coach's class roster to ensure personalized postural corrections during training.
+            </p>
+            <textarea id="memberInjuryNotes" rows="2" style="width: 100%; resize: vertical;" placeholder="e.g. Lumbar spine sensitivity, previous ACL recovery, shoulder impingement...">{{ member.injury_notes or '' }}</textarea>
+        </div>
+
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div>
+                    <span class="pill pill-crimson">Timetable</span>
+                    <h2 style="font-size: 1.7rem; margin-top: 2px;">Weekly Studio Classes</h2>
+                </div>
+                <div style="font-size: 0.8rem; color: var(--ink-muted);">
+                    Click to enroll or cancel your class reservation
+                </div>
+            </div>
+
+            {% for c in classes %}
+            {% set is_enrolled = (c.id in member.enrolled_classes|map(attribute='id')|list) %}
+            <div class="schedule-card">
+                <div>
+                    <div style="font-weight: 700; font-size: 1.05rem;">{{ c.title }}</div>
+                    <div style="font-size: 0.8rem; color: var(--ink-muted);">
+                        {{ c.schedule_text }} • {{ c.room_name }} • Coach: <strong>{{ c.trainer_name }}</strong>
+                    </div>
+                    <div style="margin-top: 6px;">
+                        <span class="pill pill-sand">{{ c.plan_name }}</span>
+                        <span class="pill {% if c.enrolled_count >= c.capacity %}pill-crimson{% else %}pill-sage{% endif %}">
+                            {{ c.enrolled_count }} / {{ c.capacity }} Booked
+                        </span>
+                    </div>
+                </div>
+                <div>
+                    {% if is_enrolled %}
+                    <button class="btn btn-outline" style="border-color: var(--crimson); color: var(--crimson);" onclick="unenrollClass({{ c.id }})">Cancel Booking</button>
+                    {% else %}
+                    <button class="btn" {% if c.enrolled_count >= c.capacity %}disabled style="opacity: 0.5;"{% endif %} onclick="enrollClass({{ c.id }})">
+                        {% if c.enrolled_count >= c.capacity %}Class Full{% else %}Book Seat{% endif %}
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div>
+        <div class="copilot-box card" style="margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <h3 style="font-size: 1.4rem;">AI Studio Copilot</h3>
+                <span class="pill pill-crimson" id="aiEngineTag">Hybrid AI</span>
+            </div>
+            <p style="font-size: 0.78rem; color: var(--ink-muted); margin-bottom: 12px;">Ask about your schedule, mobility adaptations, or coach recommendations.</p>
+            <div class="chat-scroll" id="memberChatHistory">
+                <div class="bubble bubble-bot">
+                    Welcome {{ member.fname }}! How can I assist your studio routine today? You can ask: <em>"What classes am I enrolled in?"</em> or <em>"Suggest a class for back mobility"</em>.
+                </div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="memberChatInput" style="flex: 1;" placeholder="Ask your studio copilot..." onkeydown="if(event.key==='Enter') sendMemberChat()">
+                <button class="btn" onclick="sendMemberChat()">Ask</button>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 24px;">
+            <span class="pill pill-sand">1-on-1 Appointments</span>
+            <h3 style="font-size: 1.4rem; margin: 4px 0 12px 0;">Private Sessions</h3>
+            {% for s in member.private_sessions %}
+            <div style="padding: 10px; background: var(--bg-cream); border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--border-taupe);">
+                <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 0.88rem;">
+                    <span>{{ s.focus_area }}</span>
+                    <span class="pill {% if s.status == 'Confirmed' %}pill-sage{% elif s.status == 'Pending' %}pill-amber{% else %}pill-sand{% endif %}">{{ s.status }}</span>
+                </div>
+                <div style="font-size: 0.78rem; color: var(--ink-muted); margin-top: 4px;">
+                    With Coach {{ s.coach_name }} • {{ s.session_datetime }}
+                </div>
+            </div>
+            {% else %}
+            <p style="font-size: 0.82rem; color: var(--ink-muted);">No private 1-on-1 sessions scheduled yet.</p>
+            {% endfor %}
+        </div>
+
+        <div class="card">
+            <span class="pill pill-sand">Reception Gate</span>
+            <h3 style="font-size: 1.4rem; margin: 4px 0 12px 0;">Recent Check-Ins</h3>
+            {% for c in member.recent_checkins %}
+            <div style="display: flex; justify-content: space-between; font-size: 0.82rem; padding: 8px 0; border-bottom: 1px solid var(--bg-sand);">
+                <span>{{ c.terminal_point }}</span>
+                <span style="color: var(--ink-muted);">{{ c.checkin_time }}</span>
+            </div>
+            {% else %}
+            <p style="font-size: 0.82rem; color: var(--ink-muted);">No check-in entries logged yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="passModal">
+    <div class="modal-card" style="text-align: center;">
+        <span class="pill pill-crimson">Dream Sport Digital Pass</span>
+        <h2 style="font-size: 2.2rem; margin: 8px 0;">Official Studio Credential</h2>
+        <p style="font-size: 0.85rem; color: var(--ink-muted); margin-bottom: 20px;">
+            Present this card at the studio reception optical scanner for immediate clearance.
+        </p>
+        <img src="/member/{{ member.id }}/badge" alt="Pass QR" style="max-width: 100%; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); margin-bottom: 20px;">
+        <div>
+            <a href="/member/{{ member.id }}/badge" download="dreamsport_pass_{{ member.id }}.png" class="btn">Download Pass PNG</a>
+            <button class="btn btn-outline" onclick="closePassModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="coachSwitchModal">
+    <div class="modal-card">
+        <span class="pill pill-crimson">Tier-Guarded Coach Match</span>
+        <h2 style="font-size: 2rem; margin: 8px 0 14px 0;">Choose Personal Coach</h2>
+        <p style="font-size: 0.82rem; color: var(--ink-muted); margin-bottom: 18px;">
+            You can select any coach assigned to your tier (<strong>{{ member.plan_name }}</strong>) or lower who currently has client openings.
+        </p>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            {% for c in coaches %}
+            {% set is_eligible = (not c.plan_id or c.plan_price <= member.plan_price) %}
+            {% set is_full = (c.active_clients >= c.max_clients or c.accepting_clients == 0) %}
+            <div style="padding: 16px; border: 1px solid var(--border-taupe); border-radius: 10px; display: flex; justify-content: space-between; align-items: center; background: {% if not is_eligible or is_full %}var(--bg-cream){% else %}var(--bg-surface){% endif %};">
+                <div>
+                    <div style="font-weight: 700; font-size: 1.05rem;">Coach {{ c.fname }} {{ c.lname }}</div>
+                    <div style="font-size: 0.8rem; color: var(--ink-muted);">{{ c.specialty }}</div>
+                    <div style="margin-top: 4px;">
+                        <span class="pill pill-sand">Tier: {{ c.plan_name or "All Tiers" }}</span>
+                        <span class="pill {% if is_full %}pill-crimson{% else %}pill-sage{% endif %}">{{ c.active_clients }}/{{ c.max_clients }} Clients</span>
+                    </div>
+                </div>
+                <div>
+                    {% if c.id == member.trainer_id %}
+                    <span class="pill pill-sage">Current Coach</span>
+                    {% elif not is_eligible %}
+                    <span class="pill pill-sand">Higher Tier Only</span>
+                    {% elif is_full %}
+                    <span class="pill pill-amber">At Capacity</span>
+                    {% else %}
+                    <button class="btn" onclick="submitCoachSwitch({{ c.id }})">Select Coach</button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div style="text-align: right; margin-top: 20px;">
+            <button class="btn btn-outline" onclick="closeCoachSwitchModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="privateBookModal">
+    <div class="modal-card">
+        <span class="pill pill-crimson">Personalized Training</span>
+        <h2 style="font-size: 2rem; margin: 8px 0 14px 0;">Request 1-on-1 Private Session</h2>
+        <form onsubmit="submitPrivateBooking(event)">
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 6px;">Lead Coach</label>
+                <input type="text" disabled value="Coach {{ member.trainer_name or 'Studio Assigned Staff' }}" style="width: 100%;">
+            </div>
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 6px;">Preferred Date & Hour</label>
+                <input type="datetime-local" id="privateDateTime" required style="width: 100%;">
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 6px;">Focus Objective</label>
+                <select id="privateFocusArea" style="width: 100%;">
+                    <option value="Pelvic & Postural Alignment Review">Pelvic & Postural Alignment Review</option>
+                    <option value="Advanced Core & Reformer Resistance">Advanced Core & Reformer Resistance</option>
+                    <option value="Clinical Mobility & Joint Decompression">Clinical Mobility & Joint Decompression</option>
+                    <option value="Prenatal / Postpartum Rehabilitation">Prenatal / Postpartum Rehabilitation</option>
+                </select>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn btn-outline" onclick="closePrivateBookModal()">Cancel</button>
+                <button type="submit" class="btn">Send Request to Coach</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openPassModal() { document.getElementById('passModal').classList.add('active'); }
+    function closePassModal() { document.getElementById('passModal').classList.remove('active'); }
+    function openCoachSwitchModal() { document.getElementById('coachSwitchModal').classList.add('active'); }
+    function closeCoachSwitchModal() { document.getElementById('coachSwitchModal').classList.remove('active'); }
+    function openPrivateBookModal() { document.getElementById('privateBookModal').classList.add('active'); }
+    function closePrivateBookModal() { document.getElementById('privateBookModal').classList.remove('active'); }
+
+    async function enrollClass(classId) {
+        const res = await fetch('/api/classes/enroll', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ class_id: classId })
+        });
+        const data = await res.json();
+        if (data.success) {
+            notify("Class seat confirmed!");
+            setTimeout(() => window.location.reload(), 700);
+        } else {
+            notify(data.error || "Enrollment failed", "error");
+        }
+    }
+
+    async function unenrollClass(classId) {
+        const res = await fetch('/api/classes/unenroll', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ class_id: classId })
+        });
+        const data = await res.json();
+        if (data.success) {
+            notify("Class reservation cancelled.");
+            setTimeout(() => window.location.reload(), 700);
+        }
+    }
+
+    async function submitCoachSwitch(coachId) {
+        const res = await fetch('/api/members/switch-coach', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ trainer_id: coachId })
+        });
+        const data = await res.json();
+        if (data.success) {
+            notify(`Coach successfully switched to ${data.coach_name}!`);
+            closeCoachSwitchModal();
+            setTimeout(() => window.location.reload(), 800);
+        } else {
+            notify(data.error || "Failed to switch coach", "error");
+        }
+    }
+
+    async function saveHealthNotes() {
+        const notes = document.getElementById('memberInjuryNotes').value;
+        const res = await fetch('/api/members/update-health', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ injury_notes: notes })
+        });
+        const data = await res.json();
+        if (data.success) {
+            notify("Mobility & injury restrictions saved.");
+        }
+    }
+
+    async function submitPrivateBooking(e) {
+        e.preventDefault();
+        const dt = document.getElementById('privateDateTime').value;
+        const focus = document.getElementById('privateFocusArea').value;
+        const coachId = {{ member.trainer_id or 1 }};
+
+        const res = await fetch('/api/private-session/book', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ trainer_id: coachId, datetime: dt, focus_area: focus })
+        });
+        const data = await res.json();
+        if (data.success) {
+            notify("Private session requested! Coach notified.");
+            closePrivateBookModal();
+            setTimeout(() => window.location.reload(), 800);
+        }
+    }
+
+    async function sendMemberChat() {
+        const input = document.getElementById('memberChatInput');
+        const text = input.value.trim();
+        if (!text) return;
+
+        const feed = document.getElementById('memberChatHistory');
+        feed.innerHTML += `<div class="bubble bubble-user">${text}</div>`;
+        input.value = '';
+        feed.scrollTop = feed.scrollHeight;
+
+        const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ message: text })
+        });
+        const data = await res.json();
+
+        feed.innerHTML += `
+            <div class="bubble bubble-bot">
+                <strong>[${data.badge}]</strong><br>
+                ${data.message.replace(/\n/g, '<br>')}
+            </div>
+        `;
+        feed.scrollTop = feed.scrollHeight;
+    }
+</script>
+{% endblock %}

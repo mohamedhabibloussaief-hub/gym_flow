@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+{% block page_title %}AI Simulation Agents & Relational Studio{% endblock %}
+{% block page_subtitle %}Spawn synthetic coaches, members, and class bookings or override any studio assignment in real time{% endblock %}
+
+{% block head %}
+<style>
+    .agents-banner {
+        background: linear-gradient(135deg, #FFFFFF 0%, #FAF8F5 100%);
+        border: 1px solid var(--border-taupe);
+        border-left: 5px solid var(--crimson);
+        border-radius: 14px;
+        padding: 26px;
+        margin-bottom: 32px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+    .agent-box {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-taupe);
+        border-radius: 10px;
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .agent-box h3 { font-size: 1.35rem; margin-bottom: 6px; }
+    .agent-box p { font-size: 0.82rem; color: var(--ink-muted); margin-bottom: 16px; line-height: 1.45; }
+
+    .matrix-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 26px;
+        margin-bottom: 32px;
+    }
+    .matrix-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+    }
+    .matrix-table th {
+        text-align: left;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--ink-muted);
+        padding: 10px 8px;
+        border-bottom: 1px solid var(--border-taupe);
+    }
+    .matrix-table td {
+        padding: 12px 8px;
+        border-bottom: 1px solid var(--bg-sand);
+        font-size: 0.85rem;
+    }
+    .chip-member {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--bg-sand);
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        margin: 3px;
+    }
+    .chip-remove {
+        color: var(--crimson);
+        font-weight: 700;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Multi-Agent Autonomous Generator Panel -->
+<div class="agents-banner">
+    <div class="agent-box">
+        <div>
+            <span class="pill pill-crimson">Agent 01</span>
+            <h3 style="margin-top: 8px;">Coach & Curriculum Agent</h3>
+            <p>Generates certified Dream Sport instructors, assigns them to a specialized Membership Tier, and schedules a studio class under their leadership.</p>
+        </div>
+        <button class="btn" onclick="runSingleAgent('coaches')">+ Spawn 2 Coaches & Class</button>
+    </div>
+
+    <div class="agent-box">
+        <div>
+            <span class="pill pill-crimson">Agent 02</span>
+            <h3 style="margin-top: 8px;">Member Onboarding Agent</h3>
+            <p>Generates 5 realistic studio members, pairs each with an active Membership Plan Tier and an eligible Personal Coach, and logs their billing.</p>
+        </div>
+        <button class="btn" onclick="runSingleAgent('members')">+ Spawn 5 Members & Assign</button>
+    </div>
+
+    <div class="agent-box">
+        <div>
+            <span class="pill pill-crimson">Agent 03</span>
+            <h3 style="margin-top: 8px;">Class Enrollment Agent</h3>
+            <p>Automatically enrolls active studio members into scheduled Barre classes while verifying room capacity limits.</p>
+        </div>
+        <button class="btn" onclick="runSingleAgent('enrollments')">+ Generate 8 Class Bookings</button>
+    </div>
+</div>
+
+<!-- Admin Relational Control Matrix -->
+<div class="matrix-grid">
+    <!-- Coach <-> Plan Tier Assignment -->
+    <div class="card">
+        <span class="pill pill-sand">Admin Control</span>
+        <h2 style="font-size: 1.65rem; margin-top: 6px;">Coaches & Assigned Plan Tiers</h2>
+        <p style="font-size: 0.82rem; color: var(--ink-muted);">Reassign any instructor to a different Membership Plan Tier immediately.</p>
+        <table class="matrix-table">
+            <thead>
+                <tr>
+                    <th>Instructor</th>
+                    <th>Specialty</th>
+                    <th>Assigned Tier</th>
+                    <th>Clients</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in trainers %}
+                <tr>
+                    <td><strong>{{ t.fname }} {{ t.lname }}</strong></td>
+                    <td>{{ t.specialty }}</td>
+                    <td>
+                        <select onchange="updateCoachTier({{ t.id }}, this.value)">
+                            <option value="">All Studio Tiers</option>
+                            {% for p in plans %}
+                            <option value="{{ p.id }}" {% if t.plan_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td><span class="pill pill-crimson">{{ t.active_clients }} / {{ t.max_clients }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Membership Plan Tiers & Custom Tier Creator -->
+    <div class="card">
+        <span class="pill pill-sand">Tier Catalog</span>
+        <h2 style="font-size: 1.65rem; margin-top: 6px;">Membership Plan Tiers</h2>
+        <p style="font-size: 0.82rem; color: var(--ink-muted);">Pre-populated tiers available across all onboarding dropdowns.</p>
+        <table class="matrix-table">
+            <thead>
+                <tr>
+                    <th>Tier Name (Editable)</th>
+                    <th>Price (DT/mo)</th>
+                    <th>Members</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in plans %}
+                <tr>
+                    <td>
+                        <input type="text" id="plan_name_{{ p.id }}" value="{{ p.name }}" style="width: 100%; padding: 6px 10px; font-size: 0.82rem; font-weight: 600;">
+                    </td>
+                    <td>
+                        <input type="number" step="1" id="plan_price_{{ p.id }}" value="{{ "%.0f"|format(p.price) }}" style="width: 85px; padding: 6px 8px; font-size: 0.82rem;">
+                    </td>
+                    <td><span class="pill pill-sand">{{ p.member_count }}</span></td>
+                    <td>
+                        <button class="btn btn-outline" style="padding: 5px 12px; font-size: 0.68rem;" onclick="updatePlan({{ p.id }})">Save</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-taupe); display: flex; gap: 8px;">
+            <input type="text" id="newPlanName" placeholder="New Tier Name (e.g. Pure Bridal)" style="flex: 1.5;">
+            <input type="number" id="newPlanPrice" placeholder="Price ($)" style="width: 110px;">
+            <button class="btn btn-outline" onclick="createNewPlan()">+ Add Tier</button>
+        </div>
+    </div>
+</div>
+
+<!-- Studio Classes: Reassign Coach & Manage Enrolled Members -->
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div>
+            <span class="pill pill-crimson">Full Relational Roster</span>
+            <h2 style="font-size: 1.75rem; margin-top: 4px;">Studio Classes — Coach Leadership & Member Enrollments</h2>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <select id="enrollMemberSelect">
+                {% for m in members %}
+                <option value="{{ m.id }}">#{{ "%04d"|format(m.id) }} {{ m.fname }} {{ m.lname }} ({{ m.plan_name }})</option>
+                {% endfor %}
+            </select>
+            <select id="enrollClassSelect">
+                {% for c in classes %}
+                <option value="{{ c.id }}">{{ c.title }} ({{ c.schedule_text }})</option>
+                {% endfor %}
+            </select>
+            <button class="btn" onclick="enrollSelectedMember()">+ Enroll Member in Class</button>
+        </div>
+    </div>
+
+    <table class="matrix-table">
+        <thead>
+            <tr>
+                <th>Class Title & Room</th>
+                <th>Schedule</th>
+                <th>Lead Coach (Editable)</th>
+                <th>Target Tier (Editable)</th>
+                <th>Enrolled Members (Click × to Unenroll)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in classes %}
+            <tr>
+                <td>
+                    <strong>{{ c.title }}</strong>
+                    <div style="font-size: 0.75rem; color: var(--ink-muted);">{{ c.room_name }} ({{ c.enrolled_count }}/{{ c.capacity }})</div>
+                </td>
+                <td>{{ c.schedule_text }}</td>
+                <td>
+                    <select onchange="updateClassCoach({{ c.id }}, this.value, null)">
+                        <option value="">Unassigned</option>
+                        {% for t in trainers %}
+                        <option value="{{ t.id }}" {% if c.trainer_id == t.id %}selected{% endif %}>{{ t.fname }} {{ t.lname }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td>
+                    <select onchange="updateClassCoach({{ c.id }}, {{ c.trainer_id or 'null' }}, this.value)">
+                        <option value="">All Tiers</option>
+                        {% for p in plans %}
+                        <option value="{{ p.id }}" {% if c.plan_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td>
+                    {% for em in c.enrolled_members %}
+                    <span class="chip-member">
+                        {{ em.full_name }}
+                        <span class="chip-remove" onclick="unenrollMember({{ c.id }}, {{ em.id }})" title="Remove from class">×</span>
+                    </span>
+                    {% else %}
+                    <span style="color: var(--ink-muted); font-size: 0.8rem;">No members enrolled yet</span>
+                    {% endfor %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function runSingleAgent(agentName) {
+        const res = await fetch('/api/agents/run', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ agent: agentName })
+        });
+        const data = await res.json();
+        if (data.success) {
+            notify(data.message);
+            setTimeout(() => window.location.reload(), 800);
+        }
+    }
+
+    async function updateCoachTier(trainerId, planId) {
+        await fetch(`/api/trainers/${trainerId}/update`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ plan_id: planId ? parseInt(planId) : null })
+        });
+        notify("Coach Plan Tier updated!");
+    }
+
+    async function updateClassCoach(classId, trainerId, planId) {
+        await fetch(`/api/classes/${classId}/update`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ trainer_id: trainerId ? parseInt(trainerId) : null, plan_id: planId ? parseInt(planId) : null })
+        });
+        notify("Studio Class assignment saved!");
+    }
+
+    async function enrollSelectedMember() {
+        const memberId = document.getElementById('enrollMemberSelect').value;
+        const classId = document.getElementById('enrollClassSelect').value;
+        const res = await fetch('/api/classes/enroll', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ member_id: memberId, class_id: classId })
+        });
+        const data = await res.json();
+        if (data.success) {
+            notify("Member enrolled in Barre class!");
+            setTimeout(() => window.location.reload(), 600);
+        } else {
+            notify(data.error || "Enrollment failed", "error");
+        }
+    }
+
+    async function unenrollMember(classId, memberId) {
+        await fetch('/api/classes/unenroll', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ class_id: classId, member_id: memberId })
+        });
+        notify("Member removed from class roster.");
+        setTimeout(() => window.location.reload(), 500);
+    }
+
+    async function createNewPlan() {
+        const name = document.getElementById('newPlanName').value.trim();
+        const price = parseFloat(document.getElementById('newPlanPrice').value || 140);
+        if (!name) return notify("Enter a Tier Name first", "error");
+        await fetch('/api/plans', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ name: name, price: price, duration_months: 1, perks: "Custom Studio Tier" })
+        });
+        notify(`Created tier: ${name}`);
+        setTimeout(() => window.location.reload(), 600);
+    }
+    async function updatePlan(planId) {
+        const name = document.getElementById(`plan_name_${planId}`).value.trim();
+        const price = parseFloat(document.getElementById(`plan_price_${planId}`).value || 0);
+        if (!name || price <= 0) return notify("Valid name and price required", "error");
+
+        await fetch(`/api/plans/${planId}/update`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ name: name, price: price })
+        });
+        notify(`Updated tier: ${name} ($${price}/mo)`);
+        setTimeout(() => window.location.reload(), 600);
+    }
+</script>
+{% endblock %}

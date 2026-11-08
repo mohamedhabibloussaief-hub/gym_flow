@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block page_title %}Member Studio Gateway{% endblock %}
+{% block page_subtitle %}Sign in to your Dream Sport Atelier client portal, manage class bookings, or explore coaches{% endblock %}
+
+{% block content %}
+<div style="max-width: 480px; margin: 40px auto;">
+    <div class="card" style="border-top: 5px solid var(--crimson); padding: 36px;">
+        <span class="pill pill-crimson">Client Experience</span>
+        <h2 style="font-size: 2.1rem; margin: 8px 0 20px 0;">Member Sign In</h2>
+
+        {% if error %}
+        <div style="background: rgba(200,16,46,0.1); border: 1px solid var(--crimson); color: var(--crimson); padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px;">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="/member/login">
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-muted); margin-bottom: 6px;">Email Address</label>
+                <input type="email" name="email" id="loginEmail" required style="width: 100%;" placeholder="member@dreamsport-member.tn">
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-muted); margin-bottom: 6px;">Password</label>
+                <input type="password" name="password" id="loginPassword" required style="width: 100%;" value="member123">
+            </div>
+
+            <button type="submit" class="btn" style="width: 100%; justify-content: center; padding: 12px;">Sign In to Portal</button>
+        </form>
+
+        <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--border-taupe);">
+            <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-muted); margin-bottom: 10px;">
+                ⚡ 1-Click Recruiter Demo Access
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                {% for s in samples %}
+                <button type="button" class="btn btn-sand" style="width: 100%; justify-content: space-between; font-size: 0.72rem;" onclick="fillMember('{{ s.email }}')">
+                    <span>{{ s.name }} ({{ s.plan }})</span>
+                    <span style="color: var(--crimson);">Demo Log In →</span>
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function fillMember(email) {
+        document.getElementById('loginEmail').value = email;
+        document.getElementById('loginPassword').value = 'member123';
+        document.forms[0].submit();
+    }
+</script>
+{% endblock %}

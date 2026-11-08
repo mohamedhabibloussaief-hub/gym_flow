@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block page_title %}Instructor Flight Deck{% endblock %}
+{% block page_subtitle %}Sign in to your Dream Sport Coach Cockpit, review daily class rosters, and audit client mobility notes{% endblock %}
+
+{% block content %}
+<div style="max-width: 480px; margin: 40px auto;">
+    <div class="card" style="border-top: 5px solid var(--ink); padding: 36px;">
+        <span class="pill pill-sand">Certified Staff Access</span>
+        <h2 style="font-size: 2.1rem; margin: 8px 0 20px 0;">Instructor Cockpit Sign In</h2>
+
+        {% if error %}
+        <div style="background: rgba(200,16,46,0.1); border: 1px solid var(--crimson); color: var(--crimson); padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px;">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="/coach/login">
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-muted); margin-bottom: 6px;">Staff Email</label>
+                <input type="email" name="email" id="coachEmail" required style="width: 100%;" placeholder="coach@dreamsport.tn">
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-muted); margin-bottom: 6px;">Staff Passcode</label>
+                <input type="password" name="password" id="coachPassword" required style="width: 100%;" value="coach123">
+            </div>
+
+            <button type="submit" class="btn btn-outline" style="width: 100%; justify-content: center; padding: 12px;">Access Cockpit</button>
+        </form>
+
+        <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--border-taupe);">
+            <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-muted); margin-bottom: 10px;">
+                ⚡ 1-Click Coach Demo Access
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                {% for s in samples %}
+                <button type="button" class="btn btn-sand" style="width: 100%; justify-content: space-between; font-size: 0.72rem;" onclick="fillCoach('{{ s.email }}')">
+                    <span>Coach {{ s.name }} ({{ s.specialty }})</span>
+                    <span style="color: var(--ink);">Demo Log In →</span>
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function fillCoach(email) {
+        document.getElementById('coachEmail').value = email;
+        document.getElementById('coachPassword').value = 'coach123';
+        document.forms[0].submit();
+    }
+</script>
+{% endblock %}
