@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dream Sport | Gym Management</title>
-    <!-- Editorial Luxury Typography: Cormorant Garamond + DM Sans -->
+    <title>Dream Sport Atelier | Studio Intelligence</title>
+    <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='Logo.jpg') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -24,6 +24,7 @@
             --ink: #141414;
             --ink-muted: #6E6A64;
             --sage: #1E6F50;
+            --amber: #D97706;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -43,12 +44,11 @@
             letter-spacing: -0.01em;
         }
 
-        /* Pure Barre Top Editorial Navigation Bar */
         .top-nav {
             background: var(--bg-surface);
             border-bottom: 1px solid var(--border-taupe);
-            padding: 0 42px;
-            height: 76px;
+            padding: 0 36px;
+            height: 74px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -60,24 +60,16 @@
         .brand-logo {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 12px;
             text-decoration: none;
             color: var(--ink);
         }
-        .brand-circle {
-            width: 38px;
-            height: 38px;
+        .brand-logo img {
+            height: 44px;
+            width: 44px;
             border-radius: 50%;
-            background: var(--crimson);
-            color: white;
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 1.45rem;
-            font-style: italic;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            letter-spacing: -1px;
+            object-fit: cover;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
         }
         .brand-text {
             font-size: 1.05rem;
@@ -86,16 +78,16 @@
             text-transform: uppercase;
         }
         .brand-sub {
-            font-size: 0.68rem;
+            font-size: 0.65rem;
             color: var(--ink-muted);
-            letter-spacing: 0.2em;
+            letter-spacing: 0.18em;
             text-transform: uppercase;
             display: block;
         }
 
         .nav-tabs {
             display: flex;
-            gap: 32px;
+            gap: 24px;
             list-style: none;
             height: 100%;
         }
@@ -103,7 +95,7 @@
         .nav-tab {
             text-decoration: none;
             color: var(--ink-muted);
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.14em;
@@ -118,48 +110,31 @@
             border-bottom-color: var(--crimson);
         }
 
-        .nav-actions {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        /* Editorial Page Container */
         .page-wrapper {
-            max-width: 1380px;
+            max-width: 1400px;
             width: 100%;
             margin: 0 auto;
-            padding: 40px 42px 64px 42px;
+            padding: 36px 36px 64px 36px;
         }
 
         .page-hero {
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            margin-bottom: 36px;
-            padding-bottom: 22px;
+            margin-bottom: 32px;
+            padding-bottom: 20px;
             border-bottom: 1px solid var(--border-taupe);
         }
-        .page-hero h1 {
-            font-size: 2.65rem;
-            line-height: 1.08;
-            color: var(--ink);
-        }
-        .page-hero p {
-            font-size: 0.92rem;
-            color: var(--ink-muted);
-            margin-top: 6px;
-            letter-spacing: 0.02em;
-        }
+        .page-hero h1 { font-size: 2.5rem; line-height: 1.1; }
+        .page-hero p { font-size: 0.9rem; color: var(--ink-muted); margin-top: 4px; }
 
-        /* Buttons & Pills */
         .btn {
             background: var(--crimson);
             color: #FFFFFF;
             border: 1px solid var(--crimson);
-            padding: 11px 22px;
+            padding: 10px 20px;
             border-radius: 999px;
-            font-size: 0.78rem;
+            font-size: 0.75rem;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.12em;
@@ -170,36 +145,17 @@
             align-items: center;
             gap: 8px;
         }
-        .btn:hover {
-            background: var(--crimson-dark);
-            border-color: var(--crimson-dark);
-            transform: translateY(-1px);
-        }
-        .btn-outline {
-            background: transparent;
-            color: var(--ink);
-            border: 1px solid var(--ink);
-        }
-        .btn-outline:hover {
-            background: var(--ink);
-            color: #FFFFFF;
-            border-color: var(--ink);
-        }
-        .btn-sand {
-            background: var(--bg-sand);
-            color: var(--ink);
-            border: 1px solid var(--border-taupe);
-        }
-        .btn-sand:hover {
-            background: var(--border-taupe);
-            color: var(--ink);
-        }
+        .btn:hover { background: var(--crimson-dark); border-color: var(--crimson-dark); transform: translateY(-1px); }
+        .btn-outline { background: transparent; color: var(--ink); border: 1px solid var(--ink); }
+        .btn-outline:hover { background: var(--ink); color: #FFFFFF; }
+        .btn-sand { background: var(--bg-sand); color: var(--ink); border: 1px solid var(--border-taupe); }
+        .btn-sand:hover { background: var(--border-taupe); }
 
         .card {
             background: var(--bg-surface);
             border: 1px solid var(--border-taupe);
             border-radius: 14px;
-            padding: 26px;
+            padding: 24px;
             box-shadow: 0 4px 20px rgba(20, 20, 20, 0.025);
         }
 
@@ -214,9 +170,10 @@
         }
         .pill-crimson { background: var(--crimson-soft); color: var(--crimson); border: 1px solid rgba(200,16,46,0.2); }
         .pill-sage { background: rgba(30, 111, 80, 0.1); color: var(--sage); border: 1px solid rgba(30, 111, 80, 0.25); }
+        .pill-amber { background: rgba(217, 119, 6, 0.1); color: var(--amber); border: 1px solid rgba(217, 119, 6, 0.25); }
         .pill-sand { background: var(--bg-sand); color: var(--ink-muted); }
 
-        select, input[type="text"], input[type="email"], input[type="number"] {
+        select, input[type="text"], input[type="email"], input[type="number"], input[type="password"], textarea {
             font-family: 'DM Sans', sans-serif;
             background: var(--bg-cream);
             border: 1px solid var(--border-taupe);
@@ -227,40 +184,62 @@
             outline: none;
             transition: border 0.2s;
         }
-        select:focus, input:focus { border-color: var(--crimson); background: #FFFFFF; }
+        select:focus, input:focus, textarea:focus { border-color: var(--crimson); background: #FFFFFF; }
     </style>
     {% block head %}{% endblock %}
 </head>
 <body>
     <nav class="top-nav">
         <a href="/" class="brand-logo">
-            <img src="{{ url_for('static', filename='Logo.jpg') }}" 
-                 alt="Dream Sport Logo" 
-                 style="height: 46px; width: 46px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.12);">
+            <img src="{{ url_for('static', filename='Logo.jpg') }}" alt="Dream Sport Logo">
             <div>
                 <span class="brand-text">Dream Sport</span>
-                <span class="brand-sub">Command Center & Ontology</span>
+                <span class="brand-sub">Studio Intelligence & Multi-Portal</span>
             </div>
         </a>
 
+        {% if session.get('role') == 'admin' %}
         <ul class="nav-tabs">
-            <li><a href="/" class="nav-tab {% if active_page == 'dashboard' %}active{% endif %}">Studio Overview</a></li>
-            <li><a href="/studio" class="nav-tab {% if active_page == 'studio' %}active{% endif %}">AI Agents & Studio Matrix</a></li>
-            <li><a href="/members" class="nav-tab {% if active_page == 'members' %}active{% endif %}">Member Directory</a></li>
-            <li><a href="/terminal" class="nav-tab {% if active_page == 'terminal' %}active{% endif %}">Check-In Reception</a></li>
+            <li><a href="/admin/overview" class="nav-tab {% if active_page == 'dashboard' %}active{% endif %}">Executive Console</a></li>
+            <li><a href="/admin/finances" class="nav-tab {% if active_page == 'finances' %}active{% endif %}">Financial Ledger</a></li>
+            <li><a href="/admin/studio" class="nav-tab {% if active_page == 'studio' %}active{% endif %}">Admin Control</a></li>
+            <li><a href="/admin/members" class="nav-tab {% if active_page == 'members' %}active{% endif %}">Member Roster</a></li>
+            <li><a href="/terminal" class="nav-tab {% if active_page == 'terminal' %}active{% endif %}">Reception Scanner</a></li>
         </ul>
-
-        <div class="nav-actions">
-            <button class="btn btn-sand" onclick="triggerGlobalSwarm()">Run AI Agent Swarm</button>
-            <a href="/terminal" class="btn">Reception Scanner</a>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button class="btn btn-sand" onclick="triggerGlobalSwarm()">Deploy Swarm</button>
+            <a href="/logout" class="btn btn-outline" style="padding: 7px 16px; font-size: 0.7rem;">Sign Out</a>
         </div>
+        {% elif session.get('role') == 'coach' %}
+        <ul class="nav-tabs">
+            <li><a href="/coach/dashboard" class="nav-tab active">Instructor Cockpit</a></li>
+            <li><a href="/terminal" class="nav-tab">Reception Gate</a></li>
+        </ul>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <span style="font-size: 0.8rem; font-weight: 600;">Coach Mode</span>
+            <a href="/logout" class="btn btn-outline" style="padding: 7px 16px; font-size: 0.7rem;">Sign Out</a>
+        </div>
+        {% elif session.get('role') == 'member' %}
+        <ul class="nav-tabs">
+            <li><a href="/member/portal" class="nav-tab active">My Studio Atelier</a></li>
+        </ul>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="/logout" class="btn btn-outline" style="padding: 7px 16px; font-size: 0.7rem;">Sign Out</a>
+        </div>
+        {% else %}
+        <div style="display: flex; gap: 8px;">
+            <a href="/member/login" class="btn btn-sand" style="font-size: 0.7rem;">Member Login</a>
+            <a href="/coach/login" class="btn btn-sand" style="font-size: 0.7rem;">Coach Login</a>
+            <a href="/admin/login" class="btn" style="font-size: 0.7rem;">Admin Login</a>
+        </div>
+        {% endif %}
     </nav>
 
     <div class="page-wrapper">
         <div class="page-hero">
             <div>
-                <h1>{% block page_title %}Dream Sport Studio{% endblock %}</h1>
-                <p>{% block page_subtitle %}Full-Body Fitness Telemetry, Class Rosters & Semantic Web Intelligence{% endblock %}</p>
+                <h1>{% block page_title %}Dream Sport Atelier{% endblock %}</h1>
+                <p>{% block page_subtitle %}Full-Body Conditioning, Relational Coaching & Hybrid Intelligence{% endblock %}</p>
             </div>
             <div>{% block hero_actions %}{% endblock %}</div>
         </div>
@@ -281,14 +260,13 @@
                     borderRadius: "999px",
                     padding: "12px 22px",
                     fontWeight: "600",
-                    fontSize: "0.82rem",
-                    letterSpacing: "0.04em"
+                    fontSize: "0.82rem"
                 }
             }).showToast();
         }
 
         async function triggerGlobalSwarm() {
-            notify("Autonomous Agents generating Coaches, Members & Class Bookings...");
+            notify("Deploying simulation agents to spawn coaches, members & bookings...");
             const res = await fetch('/api/agents/run', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
