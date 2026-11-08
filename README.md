@@ -1,37 +1,33 @@
-# Dream Sports Atelier — Studio Management, Multi-Agent Simulation & Semantic Web Suite
+# Dream Sport Atelier — Studio Management, Multi-Agent Simulation & Portal Suite
 
-Dream Sport Atelier is an editorial luxury studio management platform engineered with **Python (Flask)**, **SQLite (WAL Mode)**, **Autonomous Simulation Agents**, and a **Semantic Web Triplestore Copilot**.
+An enterprise-grade, multi-portal studio platform built with **Flask**, **SQLite (WAL mode)**, **Autonomous Simulation Agents**, and a **Semantic Web / Gemini AI Copilot**.
 
----
+## Multi-Portal Ecosystem
+1. **Member Portal (`/member/login` -> `/member/portal`):**
+   - Self-service class booking & cancellation
+   - Tier-guarded personal coach matching
+   - 1-on-1 private training request inbox
+   - Clinical mobility & injury restrictions intake
+   - Dynamic Apple-Wallet-styled digital QR pass (`/member/<id>/badge`)
+   - AI Concierge with Gemini 2.5 Flash & tool calling
+2. **Coach Cockpit (`/coach/login` -> `/coach/dashboard`):**
+   - Live teaching flight deck & attendance check-ins (Present / No-Show)
+   - 1-on-1 student dossier with clinical mobility notes
+   - Private session request approval workflow
+   - Dynamic commission & performance payout calculator
+3. **Executive Console & Financial Ledger (`/admin/login` -> `/admin/overview`, `/admin/finances`):**
+   - Studio telemetry and KPI metrics
+   - Donut Budget Allocator Simulator with locked contractual payroll & discretionary sliders
+   - Master relational matrix for instructors, classes, and tiers
+   - Anti-pass-sharing optical reception terminal
+   - Indelible studio audit logging
 
-## System Architecture & Engineering Stack
-
-* **Backend Framework:** Flask (Python 3) with RESTful JSON API controllers and Jinja2 template inheritance.
-* **Database Layer:** SQLite configured with `PRAGMA journal_mode = WAL;` and `PRAGMA foreign_keys = ON;`. Includes automatic startup bootstrapping (`ensure_initialized()`) so tables, Membership Plan Tiers, Coaches, Classes, and Members are immediately available on first launch.
-* **Autonomous Simulation Engine (`agents.py`):**
-  * **Agent 01 (`Coach & Curriculum Agent`):** Generates certified Barre instructors, assigns them to specialized Membership Tiers, and schedules studio classes they lead.
-  * **Agent 02 (`Member Onboarding Agent`):** Generates realistic members, assigns them to a Membership Tier and Personal Coach, and records payments and check-in history.
-  * **Agent 03 (`Class Enrollment Agent`):** Automatically enrolls active members into scheduled Barre classes while respecting room capacity limits.
-* **Semantic Web Copilot (`chatbot.py`):** Tokenizes natural language queries into ontology concepts (`Subject -> Predicate -> Object`) and resolves multi-hop queries across Members, Coaches, Classes, Tiers, and Financials.
-* **Editorial Design System:** Inspired by Pure Barre (`#FAF8F5` Alabaster Cream, `#FFFFFF` Pure White, `#141414` Deep Charcoal, `#C8102E` Pure Barre Crimson) paired with `Cormorant Garamond` + `DM Sans` typography.
-
----
-
-## Quickstart & Local Setup
-
-### 1. Create Virtual Environment & Install Dependencies
+## Quickstart Setup
 ```bash
-python -m venv venv
-# Windows:
-venv\Scripts\activate
-# macOS / Linux:
-source venv/bin/activate
-
+unzip dreamsport_complete_v4.zip
+cd dreamsport
 pip install -r requirements.txt
-```
-
-### 2. Run the Application
-```bash
 python app.py
 ```
-Open `http://127.0.0.1:5000` in your browser.
+Open `http://localhost:5000` (or `http://<your-ip>:5000` across your local Wi-Fi).
+Demo logins are pre-loaded on each login portal.
