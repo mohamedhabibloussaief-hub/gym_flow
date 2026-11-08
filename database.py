@@ -1,6 +1,7 @@
 import sqlite3
 import os
 from flask import g
+from werkzeug.security import generate_password_hash
 
 DATABASE_FILE = "dreamsport_studio.db"
 
@@ -34,27 +35,32 @@ def execute_db(query, args=()):
     cur.close()
     return last_id
 
-def init_db_schema(schema_path="schema.sql"):
-    if not os.path.exists(schema_path) and os.path.exists("schema-v2.sql"):
-        schema_path = "schema-v2.sql"
+def log_audit(action_type, actor_role, actor_name, details):
+    try:
+        execute_db(
+            "INSERT INTO audit_logs (action_type, actor_role, actor_name, details) VALUES (?, ?, ?, ?)",
+            (action_type, actor_role, actor_name, details)
+        )
+    except Exception:
+        pass
+
+def init_db_schema():
     conn = sqlite3.connect(DATABASE_FILE)
-    with open(schema_path, "r", encoding="utf-8") as f:
+    with open("schema.sql", "r", encoding="utf-8") as f:
         conn.executescript(f.read())
     conn.commit()
     conn.close()
 
 def ensure_initialized():
-    """Guarantees tables and baseline membership plans exist on server startup."""
     conn = sqlite3.connect(DATABASE_FILE)
     cur = conn.cursor()
-    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='membership_plans'")
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='users'")
     exists = cur.fetchone()
     conn.close()
 
     if not exists:
         init_db_schema()
         from agents import StudioSimulationAgents
-        # Run full initial studio population automatically
         conn = sqlite3.connect(DATABASE_FILE)
         conn.row_factory = sqlite3.Row
         StudioSimulationAgents.bootstrap_if_empty(conn)
