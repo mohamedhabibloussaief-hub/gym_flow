@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  dreamsport:
+    build: .
+    container_name: dreamsport_atelier
+    ports:
+      - "5000:5000"
+    environment:
+      - GEMINI_API_KEY=AQ.Ab8RN6JQqFaHzU1B2UUkkBfHOhr-lZN2yR9gtPYu7g1MRX_MeA
+    volumes:
+      - .:/app
+    restart: unless-stopped
