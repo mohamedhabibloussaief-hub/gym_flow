@@ -180,10 +180,10 @@
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
-                <span class="kpi-label">Pure Barre Curriculum</span>
+                <span class="kpi-label">Dream Sport Curriculum</span>
                 <h2 style="font-size: 1.65rem; margin-top: 2px;">Studio Class Schedule & Occupancy</h2>
             </div>
-            <a href="/studio" class="btn btn-outline" style="padding: 8px 16px; font-size: 0.72rem;">Manage Assignments</a>
+            <a href="/admin/studio" class="btn btn-outline" style="padding: 8px 16px; font-size: 0.72rem;">Manage Assignments</a>        
         </div>
         <table class="schedule-table">
             <thead>
@@ -230,7 +230,7 @@
         <div class="chat-feed" id="chatHistory">
             <div class="msg-bubble msg-bot">
                 <span class="triple-tag">StudioOntology ──[status]──> Ready</span><br>
-                Welcome to the Pure Barre Semantic Web Copilot. Ask natural questions about <strong>members</strong>, <strong>coaches</strong>, <strong>classes</strong>, <strong>tiers</strong>, or specific names.
+                Welcome to the Dream Sport Semantic Web Copilot. Ask natural questions about <strong>members</strong>, <strong>coaches</strong>, <strong>classes</strong>, <strong>tiers</strong>, or specific names.
             </div>
         </div>
 
@@ -257,7 +257,7 @@
 
         document.getElementById('kpiMembers').innerText = data.total_active;
         document.getElementById('kpiEnrollments').innerText = data.total_enrollments;
-        document.getElementById('kpiRevenue').innerText = '$' + data.monthly_rev.toLocaleString(undefined, {minimumFractionDigits: 0});
+        document.getElementById('kpiRevenue').innerHTML = data.monthly_rev.toLocaleString(undefined, {minimumFractionDigits: 0}) + ' <span style="font-size: 0.52em; font-weight: 600; letter-spacing: 0.04em;">DT</span>';
         document.getElementById('kpiCoaches').innerText = data.active_trainers;
 
         const tbody = document.getElementById('classScheduleBody');
@@ -294,7 +294,7 @@
             data: {
                 labels: rev.labels,
                 datasets: [{
-                    label: 'Revenue ($)',
+                    label: 'Revenue (DT)',
                     data: rev.values,
                     backgroundColor: ['#C8102E', '#141414', '#8C7A6B', '#D5CBBF'],
                     borderRadius: 6
